@@ -1,40 +1,48 @@
-import { create } from 'zustand'
-import { format } from 'date-fns'
-import type { SpendingCard, Transaction, Category } from '@/types'
+import { create } from "zustand";
+import { format } from "date-fns";
+import type { SpendingCard, Transaction, Category } from "@/types";
 
 interface AppState {
   // ── Selected date ──────────────────────────────────────────
-  selectedDate: string // YYYY-MM-DD
-  setSelectedDate: (date: string) => void
+  selectedDate: string; // YYYY-MM-DD
+  setSelectedDate: (date: string) => void;
+
+  // ── View month (shared between MonthlyView & ReportView) ───
+  viewMonth: string; // YYYY-MM
+  setViewMonth: (m: string) => void;
 
   // ── Categories ─────────────────────────────────────────────
-  categories: Category[]
-  setCategories: (cats: Category[]) => void
+  categories: Category[];
+  setCategories: (cats: Category[]) => void;
 
   // ── Spending cards (templates) ─────────────────────────────
-  cards: SpendingCard[]
-  setCards: (cards: SpendingCard[]) => void
-  addCard: (card: SpendingCard) => void
-  updateCard: (card: SpendingCard) => void
-  removeCard: (id: string) => void
+  cards: SpendingCard[];
+  setCards: (cards: SpendingCard[]) => void;
+  addCard: (card: SpendingCard) => void;
+  updateCard: (card: SpendingCard) => void;
+  removeCard: (id: string) => void;
 
   // ── Transactions (by date map) ─────────────────────────────
-  transactionsByDate: Record<string, Transaction[]> // key: YYYY-MM-DD
-  setTransactionsForDate: (date: string, txns: Transaction[]) => void
-  addTransaction: (txn: Transaction) => void
-  updateTransaction: (txn: Transaction) => void
-  removeTransaction: (id: string, date: string) => void
-  reorderTransactions: (date: string, transactions: Transaction[]) => void
+  transactionsByDate: Record<string, Transaction[]>; // key: YYYY-MM-DD
+  setTransactionsForDate: (date: string, txns: Transaction[]) => void;
+  addTransaction: (txn: Transaction) => void;
+  updateTransaction: (txn: Transaction) => void;
+  removeTransaction: (id: string, date: string) => void;
+  reorderTransactions: (date: string, transactions: Transaction[]) => void;
 
   // ── UI state ───────────────────────────────────────────────
-  isDragging: boolean
-  setIsDragging: (v: boolean) => void
+  isDragging: boolean;
+  setIsDragging: (v: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
   // ── Selected date ──────────────────────────────────────────
-  selectedDate: format(new Date(), 'yyyy-MM-dd'),
+  selectedDate: format(new Date(), "yyyy-MM-dd"),
   setSelectedDate: (date) => set({ selectedDate: date }),
+
+  // ── View month ─────────────────────────────────────────────
+  viewMonth: format(new Date(), "yyyy-MM"),
+  setViewMonth: (viewMonth) => set({ viewMonth }),
 
   // ── Categories ─────────────────────────────────────────────
   categories: [],
@@ -43,8 +51,7 @@ export const useAppStore = create<AppState>((set) => ({
   // ── Spending cards ─────────────────────────────────────────
   cards: [],
   setCards: (cards) => set({ cards }),
-  addCard: (card) =>
-    set((s) => ({ cards: [card, ...s.cards] })),
+  addCard: (card) => set((s) => ({ cards: [card, ...s.cards] })),
   updateCard: (card) =>
     set((s) => ({ cards: s.cards.map((c) => (c.id === card.id ? card : c)) })),
   removeCard: (id) =>
@@ -58,33 +65,33 @@ export const useAppStore = create<AppState>((set) => ({
     })),
   addTransaction: (txn) =>
     set((s) => {
-      const existing = s.transactionsByDate[txn.date] ?? []
+      const existing = s.transactionsByDate[txn.date] ?? [];
       return {
         transactionsByDate: {
           ...s.transactionsByDate,
           [txn.date]: [...existing, txn],
         },
-      }
+      };
     }),
   updateTransaction: (txn) =>
     set((s) => {
-      const existing = s.transactionsByDate[txn.date] ?? []
+      const existing = s.transactionsByDate[txn.date] ?? [];
       return {
         transactionsByDate: {
           ...s.transactionsByDate,
           [txn.date]: existing.map((t) => (t.id === txn.id ? txn : t)),
         },
-      }
+      };
     }),
   removeTransaction: (id, date) =>
     set((s) => {
-      const existing = s.transactionsByDate[date] ?? []
+      const existing = s.transactionsByDate[date] ?? [];
       return {
         transactionsByDate: {
           ...s.transactionsByDate,
           [date]: existing.filter((t) => t.id !== id),
         },
-      }
+      };
     }),
   reorderTransactions: (date, transactions) =>
     set((s) => ({
@@ -94,4 +101,4 @@ export const useAppStore = create<AppState>((set) => ({
   // ── UI ─────────────────────────────────────────────────────
   isDragging: false,
   setIsDragging: (isDragging) => set({ isDragging }),
-}))
+}));

@@ -15,6 +15,7 @@ import {
   useTransactions,
   useDeleteTransaction,
   useSaveTransactionAsCard,
+  useCopyFromYesterday,
 } from "@/hooks/useData";
 import { formatVND, formatCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,8 @@ import {
   Trash2,
   BookmarkPlus,
   GripVertical,
+  Copy,
+  Loader2,
 } from "lucide-react";
 import { EditTransactionDialog } from "./EditTransactionDialog";
 import type { Transaction } from "@/types";
@@ -47,6 +50,7 @@ export function SelectedDayView() {
   const transactionsByDate = useAppStore((s) => s.transactionsByDate);
 
   useTransactions(selectedDate);
+  const copyFromYesterday = useCopyFromYesterday();
 
   const transactions = transactionsByDate[selectedDate] ?? [];
   const expenses = transactions.filter((t) => t.type === "expense");
@@ -216,6 +220,21 @@ export function SelectedDayView() {
               )}>
               {isOver ? "Thả thẻ vào đây" : "Kéo thẻ chi tiêu vào đây"}
             </p>
+            {!isOver && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5 text-slate-500 hover:text-indigo-600 hover:border-indigo-300"
+                disabled={copyFromYesterday.isPending}
+                onClick={() => copyFromYesterday.mutate(selectedDate)}>
+                {copyFromYesterday.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+                Như hôm qua
+              </Button>
+            )}
           </div>
         ) : (
           <div className="p-4 space-y-4">

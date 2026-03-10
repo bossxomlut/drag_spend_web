@@ -83,6 +83,12 @@ export function DashboardClient() {
 
   const [activeDragItem, setActiveDragItem] = useState<DragItem | null>(null);
   const [mobileTab, setMobileTab] = useState<MobileTab>("day");
+  const [hiddenCardIds, setHiddenCardIds] = useState<Set<string>>(new Set());
+
+  // Reset hidden cards when the selected date changes
+  useEffect(() => {
+    setHiddenCardIds(new Set());
+  }, [selectedDate]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -160,6 +166,7 @@ export function DashboardClient() {
           onSuccess: (real) => {
             removeTransaction(tempId, targetDate);
             addTransaction(real);
+            setHiddenCardIds((prev) => new Set([...prev, card.id]));
           },
           onError: () => {
             removeTransaction(tempId, targetDate);
@@ -187,7 +194,7 @@ export function DashboardClient() {
               "lg:w-86 lg:flex lg:flex-col",
               mobileTab === "cards" ? "flex flex-col flex-1" : "hidden",
             )}>
-            <CardPanel />
+            <CardPanel hiddenCardIds={hiddenCardIds} />
           </aside>
 
           {/* Column 2: Selected Day — lg+: w-72, mobile tab */}

@@ -14,6 +14,7 @@ interface AppState {
   // ── Categories ─────────────────────────────────────────────
   categories: Category[];
   setCategories: (cats: Category[]) => void;
+  addCategory: (cat: Category) => void;
 
   // ── Spending cards (templates) ─────────────────────────────
   cards: SpendingCard[];
@@ -47,6 +48,12 @@ export const useAppStore = create<AppState>((set) => ({
   // ── Categories ─────────────────────────────────────────────
   categories: [],
   setCategories: (categories) => set({ categories }),
+  addCategory: (cat) =>
+    set((s) => ({
+      categories: [...s.categories, cat].sort(
+        (a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name),
+      ),
+    })),
 
   // ── Spending cards ─────────────────────────────────────────
   cards: [],

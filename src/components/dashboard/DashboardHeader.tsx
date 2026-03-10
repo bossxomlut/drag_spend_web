@@ -1,13 +1,32 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { TrendingDown, LogOut } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { TrendingDown, LogOut, User } from "lucide-react";
 import { toast } from "sonner";
 
 export function DashboardHeader() {
   const router = useRouter();
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUserName(user.user_metadata?.name ?? null);
+        setUserEmail(user.email ?? null);
+      }
+    });
+  }, []);
+
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -15,6 +34,15 @@ export function DashboardHeader() {
     router.push("/auth/login");
     router.refresh();
   }
+
+  const initials = userName
+    ? userName
+        .split(" ")
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "?";
 
   return (
     <header className="h-12 lg:h-14 bg-slate-900 text-white flex items-center justify-between px-3 lg:px-4 flex-shrink-0 shadow-md">
@@ -26,14 +54,45 @@ export function DashboardHeader() {
           Drag Spend
         </span>
       </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-slate-400 hover:text-white hover:bg-slate-800 h-8 px-2 lg:px-3"
-        onClick={handleLogout}>
-        <LogOut className="w-4 h-4" />
-        <span className="hidden sm:inline ml-1">Đăng xuất</span>
-      </Button>
+
+      <div className="flex items-center gap-1">
+        {/* User info popover */}
+        <Popover>
+          <PopoverTrigger className="text-slate-400 hover:text-white hover:bg-slate-800 h-8 w-8 rounded-full flex items-center justify-center transition-colors">
+            {userName ? (
+              <span className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-[11px] font-bold text-white">
+                {initials}
+              </span>
+            ) : (
+              <User className="w-4 h-4" />
+            )}
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-3" align="end">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center text-sm font-bold text-white shrink-0">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                {userName && (
+                  <p className="text-sm font-semibold text-slate-800 truncate">
+                    {userName}
+                  </p>
+                )}
+                {userEmail && (
+                  <p className="text-xs text-slate-500 truncate">{userEmail}</p>
+                )}
+              </div>
+            </div>
+            <Separator className="mb-2" />
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
+              <LogOut className="w-3.5 h-3.5" />
+              Đăng xuất
+            </button>
+          </PopoverContent>
+        </Popover>
+      </div>
     </header>
   );
 }

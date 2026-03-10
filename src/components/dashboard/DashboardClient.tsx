@@ -32,44 +32,27 @@ export function DashboardClient() {
   useCategories();
   useCards();
 
-  // Ensure profile row exists (handles users created before schema was applied)
+  // Ensure profile exists and seed default data on first login
   useEffect(() => {
-    async function ensureProfile() {
+    async function ensureSeeded() {
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Upsert profile
-      await supabase
-        .from("profiles")
-        .upsert(
-          { id: user.id, name: user.user_metadata?.name ?? null },
-          { onConflict: "id", ignoreDuplicates: true },
-        );
+      const { data: seeded } = await supabase.rpc("ensure_user_seeded", {
+        p_user_id: user.id,
+        p_name: user.user_metadata?.name ?? null,
+      });
 
-      // Seed default categories if none exist yet
-      const { count } = await supabase
-        .from("categories")
-        .select("*", { count: "exact", head: true });
-
-      if ((count ?? 0) === 0) {
-        await supabase.rpc("seed_default_categories", { p_user_id: user.id });
+      // Only refetch if seeding actually happened (first login)
+      if (seeded) {
         qc.invalidateQueries({ queryKey: ["categories"] });
-      }
-
-      // Seed default cards if none exist yet
-      const { count: cardCount } = await supabase
-        .from("spending_cards")
-        .select("*", { count: "exact", head: true });
-
-      if ((cardCount ?? 0) === 0) {
-        await supabase.rpc("seed_default_cards", { p_user_id: user.id });
         qc.invalidateQueries({ queryKey: ["cards"] });
       }
     }
-    ensureProfile();
+    ensureSeeded();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

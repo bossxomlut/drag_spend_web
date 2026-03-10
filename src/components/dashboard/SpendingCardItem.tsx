@@ -12,6 +12,14 @@ import {
 } from "@/hooks/useData";
 import { useAppStore } from "@/store/useAppStore";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, GripVertical, Plus, Check } from "lucide-react";
 import { CreateCardDialog } from "./CreateCardDialog";
 import { toast } from "sonner";
@@ -23,6 +31,7 @@ interface Props {
 
 export function SpendingCardItem({ card }: Props) {
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const deleteCard = useDeleteCard();
   const setDefaultVariant = useSetDefaultVariant();
@@ -229,7 +238,7 @@ export function SpendingCardItem({ card }: Props) {
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
-                deleteCard.mutate(card.id);
+                setDeleteConfirm(true);
               }}
               className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
               <Trash2 className="w-3 h-3" />
@@ -246,12 +255,45 @@ export function SpendingCardItem({ card }: Props) {
           </div>
         </div>
       </div>
-
       <CreateCardDialog
         open={editOpen}
         onOpenChange={setEditOpen}
         editCard={card}
       />
+      <Dialog open={deleteConfirm} onOpenChange={setDeleteConfirm}>
+        <DialogContent className="max-w-sm">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              deleteCard.mutate(card.id);
+              setDeleteConfirm(false);
+            }}>
+            <DialogHeader>
+              <DialogTitle>Xóa thẻ này?</DialogTitle>
+              <p className="text-sm text-slate-500 mt-1">
+                Thẻ <strong>&ldquo;{card.title}&rdquo;</strong> sẽ bị xóa vĩnh
+                viễn.
+              </p>
+            </DialogHeader>
+            <DialogFooter className="gap-2 mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteConfirm(false)}>
+                Huỷ
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                className="bg-red-500 hover:bg-red-600 text-white"
+                disabled={deleteCard.isPending}>
+                Xóa
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>{" "}
     </>
   );
 }

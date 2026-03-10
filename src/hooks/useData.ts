@@ -8,6 +8,7 @@ import type {
   Category,
   SpendingCard,
   Transaction,
+  TransactionType,
   CreateCardPayload,
   CreateTransactionPayload,
   UpdateTransactionPayload,
@@ -32,6 +33,47 @@ export function useCategories() {
       if (error) throw error;
       setCategories(data as Category[]);
       return data as Category[];
+    },
+  });
+}
+
+export function useCreateCategory() {
+  const qc = useQueryClient();
+  const addCategory = useAppStore((s) => s.addCategory);
+
+  return useMutation({
+    mutationFn: async (payload: {
+      name: string;
+      icon: string;
+      color: string;
+      type: TransactionType;
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("categories")
+        .insert({
+          user_id: user.id,
+          name: payload.name,
+          icon: payload.icon,
+          color: payload.color,
+          type: payload.type,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Category;
+    },
+    onSuccess: (newCategory) => {
+      addCategory(newCategory);
+      qc.invalidateQueries({ queryKey: ["categories"] });
+      toast.success("Đã thêm danh mục");
+    },
+    onError: () => {
+      toast.error("Không thể thêm danh mục");
     },
   });
 }

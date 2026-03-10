@@ -332,29 +332,36 @@ function ConfirmDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description && (
-            <p className="text-sm text-slate-500 mt-1">{description}</p>
-          )}
-        </DialogHeader>
-        <DialogFooter className="gap-2 mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenChange(false)}>
-            Huỷ
-          </Button>
-          <Button
-            size="sm"
-            className={danger ? "bg-red-500 hover:bg-red-600 text-white" : ""}
-            onClick={() => {
-              onConfirm();
-              onOpenChange(false);
-            }}>
-            {confirmLabel}
-          </Button>
-        </DialogFooter>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onConfirm();
+            onOpenChange(false);
+          }}>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            {description && (
+              <p className="text-sm text-slate-500 mt-1">{description}</p>
+            )}
+          </DialogHeader>
+          <DialogFooter className="gap-2 mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}>
+              Huỷ
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              className={
+                danger ? "bg-red-500 hover:bg-red-600 text-white" : ""
+              }>
+              {confirmLabel}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
@@ -396,7 +403,7 @@ function TransactionItemFull({
         ref={setNodeRef}
         style={style}
         className={cn(
-          "group flex items-center gap-1.5 px-1.5 py-1 rounded-md",
+          "group flex items-center gap-2 px-2 py-2 rounded-lg",
           "transition-colors duration-100 hover:bg-slate-50",
         )}>
         {/* Drag handle */}
@@ -404,30 +411,28 @@ function TransactionItemFull({
           {...attributes}
           {...listeners}
           className="text-slate-200 hover:text-slate-400 cursor-grab active:cursor-grabbing touch-none shrink-0 p-0.5">
-          <GripVertical className="w-3 h-3" />
+          <GripVertical className="w-3.5 h-3.5" />
         </button>
 
         {/* Icon */}
-        <span className="text-sm shrink-0 leading-none">
+        <span className="text-base shrink-0 leading-none">
           {txn.category?.icon ?? (txn.type === "expense" ? "💸" : "💰")}
         </span>
 
-        {/* Title */}
-        <p className="flex-1 min-w-0 text-xs text-slate-700 truncate">
-          {txn.title}
-        </p>
-
-        {/* Note (inline, muted) */}
-        {txn.note && (
-          <span className="text-[11px] text-slate-400 italic truncate max-w-[100px] hidden sm:inline">
-            {txn.note}
-          </span>
-        )}
+        {/* Title + note */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-slate-700 truncate leading-tight">
+            {txn.title}
+          </p>
+          {txn.note && (
+            <p className="text-xs text-slate-400 italic truncate">{txn.note}</p>
+          )}
+        </div>
 
         {/* Amount */}
         <span
           className={cn(
-            "text-xs font-semibold shrink-0 tabular-nums",
+            "text-sm font-semibold shrink-0 tabular-nums",
             txn.type === "expense" ? "text-red-500" : "text-green-600",
           )}>
           {txn.type === "expense" ? "-" : "+"}
@@ -438,21 +443,21 @@ function TransactionItemFull({
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           <button
             onClick={() => setEditConfirm(true)}
-            className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 hover:text-indigo-500 transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 hover:text-indigo-500 transition-colors"
             title="Chỉnh sửa">
-            <Pencil className="w-3 h-3" />
+            <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => saveAsCard.mutate(txn)}
-            className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 hover:text-amber-500 transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 hover:text-amber-500 transition-colors"
             title="Lưu thành thẻ mới">
-            <BookmarkPlus className="w-3 h-3" />
+            <BookmarkPlus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setDeleteConfirm(true)}
-            className="w-5 h-5 flex items-center justify-center rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
             title="Xóa">
-            <Trash2 className="w-3 h-3" />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

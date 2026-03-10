@@ -58,6 +58,16 @@ export function DashboardClient() {
         await supabase.rpc("seed_default_categories", { p_user_id: user.id });
         qc.invalidateQueries({ queryKey: ["categories"] });
       }
+
+      // Seed default cards if none exist yet
+      const { count: cardCount } = await supabase
+        .from("spending_cards")
+        .select("*", { count: "exact", head: true });
+
+      if ((cardCount ?? 0) === 0) {
+        await supabase.rpc("seed_default_cards", { p_user_id: user.id });
+        qc.invalidateQueries({ queryKey: ["cards"] });
+      }
     }
     ensureProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -174,7 +184,7 @@ export function DashboardClient() {
           <aside
             className={cn(
               "border-r border-slate-200 bg-white overflow-y-auto flex-shrink-0",
-              "lg:w-52 lg:flex lg:flex-col",
+              "lg:w-86 lg:flex lg:flex-col",
               mobileTab === "cards" ? "flex flex-col flex-1" : "hidden",
             )}>
             <CardPanel />

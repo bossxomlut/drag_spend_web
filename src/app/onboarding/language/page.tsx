@@ -8,7 +8,26 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { TrendingDown, Check } from "lucide-react";
-import { getStoredUILanguage } from "@/hooks/useUILanguage";
+import { useUILanguage, getStoredUILanguage } from "@/hooks/useUILanguage";
+
+const T = {
+  vi: {
+    title: "Chọn ngôn ngữ",
+    subtitle: "Dữ liệu mẫu sẽ được tạo theo ngôn ngữ bạn chọn.",
+    btnLoading: "Đang khởi tạo...",
+    btnContinue: "Tiếp tục",
+    errSession: "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.",
+    errGeneric: "Có lỗi xảy ra, vui lòng thử lại.",
+  },
+  en: {
+    title: "Choose your language",
+    subtitle: "Sample data will be created in the language you choose.",
+    btnLoading: "Setting up...",
+    btnContinue: "Continue",
+    errSession: "Session expired, please log in again.",
+    errGeneric: "An error occurred, please try again.",
+  },
+} as const;
 
 const LANGUAGES = [
   {
@@ -29,6 +48,8 @@ export default function LanguageSelectPage() {
   const [selected, setSelected] = useState<string>(() => getStoredUILanguage());
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [lang] = useUILanguage();
+  const t = T[lang] ?? T.vi;
 
   async function handleContinue() {
     if (!selected) return;
@@ -40,7 +61,7 @@ export default function LanguageSelectPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại.");
+      toast.error(t.errSession);
       router.push("/auth/login");
       return;
     }
@@ -54,7 +75,7 @@ export default function LanguageSelectPage() {
     setLoading(false);
 
     if (error) {
-      toast.error("Có lỗi xảy ra, vui lòng thử lại.");
+      toast.error(t.errGeneric);
       return;
     }
 
@@ -77,13 +98,9 @@ export default function LanguageSelectPage() {
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h1 className="text-xl font-semibold text-slate-800 mb-1">
-            Chọn ngôn ngữ
+            {t.title}
           </h1>
-          <p className="text-sm text-slate-500 mb-6">
-            Dữ liệu mẫu sẽ được tạo theo ngôn ngữ bạn chọn.
-            <br />
-            <span className="text-slate-400">Choose your language</span>
-          </p>
+          <p className="text-sm text-slate-500 mb-6">{t.subtitle}</p>
 
           <div className="grid grid-cols-2 gap-3 mb-6">
             {LANGUAGES.map((lang) => {
@@ -123,7 +140,7 @@ export default function LanguageSelectPage() {
             className="w-full"
             disabled={!selected || loading}
             onClick={handleContinue}>
-            {loading ? "Đang khởi tạo..." : "Tiếp tục"}
+            {loading ? t.btnLoading : t.btnContinue}
           </Button>
         </div>
       </div>

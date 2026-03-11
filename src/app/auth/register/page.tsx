@@ -1,40 +1,73 @@
-'use client'
+"use client";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
-import Link from 'next/link'
-import { TrendingDown } from 'lucide-react'
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import Link from "next/link";
+import { TrendingDown } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useUILanguage } from "@/hooks/useUILanguage";
+
+const T = {
+  vi: {
+    subtitle: "Quản lý thu chi thông minh",
+    heading: "Tạo tài khoản",
+    name: "Tên của bạn",
+    namePlaceholder: "Nguyễn Văn A",
+    password: "Mật khẩu",
+    passwordPlaceholder: "Tối thiểu 6 ký tự",
+    submit: "Đăng ký",
+    submitting: "Đang tạo...",
+    hasAccount: "Đã có tài khoản?",
+    login: "Đăng nhập",
+    successMsg: "Đăng ký thành công! Đang chuyển hướng...",
+  },
+  en: {
+    subtitle: "Smart expense tracking",
+    heading: "Create account",
+    name: "Your name",
+    namePlaceholder: "John Doe",
+    password: "Password",
+    passwordPlaceholder: "At least 6 characters",
+    submit: "Register",
+    submitting: "Creating...",
+    hasAccount: "Already have an account?",
+    login: "Sign in",
+    successMsg: "Account created! Redirecting...",
+  },
+};
 
 export default function RegisterPage() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [lang] = useUILanguage();
+  const t = T[lang];
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   async function handleRegister(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    const supabase = createClient()
+    e.preventDefault();
+    setLoading(true);
+    const supabase = createClient();
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name } },
-    })
-    setLoading(false)
+    });
+    setLoading(false);
     if (error) {
-      toast.error(error.message)
+      toast.error(error.message);
     } else {
-      toast.success('Đăng ký thành công! Đang chuyển hướng...')
-      router.push('/dashboard')
-      router.refresh()
+      toast.success(t.successMsg);
+      router.push("/dashboard");
+      router.refresh();
     }
   }
 
@@ -48,17 +81,22 @@ export default function RegisterPage() {
             </div>
             <span className="text-2xl font-bold">Drag Spend</span>
           </div>
-          <p className="text-slate-400 text-sm">Quản lý thu chi thông minh</p>
+          <p className="text-slate-400 text-sm">{t.subtitle}</p>
+          <div className="flex justify-center mt-3">
+            <LanguageSwitcher />
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-xl font-semibold text-slate-800 mb-6">Tạo tài khoản</h1>
+          <h1 className="text-xl font-semibold text-slate-800 mb-6">
+            {t.heading}
+          </h1>
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Tên của bạn</Label>
+              <Label htmlFor="name">{t.name}</Label>
               <Input
                 id="name"
-                placeholder="Nguyễn Văn A"
+                placeholder={t.namePlaceholder}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -76,11 +114,11 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mật khẩu</Label>
+              <Label htmlFor="password">{t.password}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Tối thiểu 6 ký tự"
+                placeholder={t.passwordPlaceholder}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 minLength={6}
@@ -88,17 +126,19 @@ export default function RegisterPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Đang tạo...' : 'Đăng ký'}
+              {loading ? t.submitting : t.submit}
             </Button>
           </form>
           <p className="text-center text-sm text-slate-500 mt-4">
-            Đã có tài khoản?{' '}
-            <Link href="/auth/login" className="text-indigo-600 hover:underline font-medium">
-              Đăng nhập
+            {t.hasAccount}{" "}
+            <Link
+              href="/auth/login"
+              className="text-indigo-600 hover:underline font-medium">
+              {t.login}
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

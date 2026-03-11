@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -12,9 +11,13 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { useQueryClient } from "@tanstack/react-query";
 import { useAppStore } from "@/store/useAppStore";
-import { useCategories, useCards, useCreateTransaction } from "@/hooks/useData";
+import {
+  useProfile,
+  useCategories,
+  useCards,
+  useCreateTransaction,
+} from "@/hooks/useData";
 import { CardPanel } from "./CardPanel";
 import { SelectedDayView } from "./SelectedDayView";
 import { MonthlyView } from "./MonthlyView";
@@ -24,37 +27,14 @@ import { CardDragOverlay } from "./CardDragOverlay";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, CalendarDays, Calendar, BarChart2 } from "lucide-react";
 import type { DragItem } from "@/types";
+import { useDashboardT } from "@/hooks/useDashboardT";
 
 type MobileTab = "cards" | "day" | "month" | "report";
 
 export function DashboardClient() {
-  const qc = useQueryClient();
+  useProfile();
   useCategories();
   useCards();
-
-  // Ensure profile exists and seed default data on first login
-  useEffect(() => {
-    async function ensureSeeded() {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: seeded } = await supabase.rpc("ensure_user_seeded", {
-        p_user_id: user.id,
-        p_name: user.user_metadata?.name ?? null,
-      });
-
-      // Only refetch if seeding actually happened (first login)
-      if (seeded) {
-        qc.invalidateQueries({ queryKey: ["categories"] });
-        qc.invalidateQueries({ queryKey: ["cards"] });
-      }
-    }
-    ensureSeeded();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const setIsDragging = useAppStore((s) => s.setIsDragging);
   const addTransaction = useAppStore((s) => s.addTransaction);
@@ -63,6 +43,7 @@ export function DashboardClient() {
 
   const createTransaction = useCreateTransaction();
 
+  const t = useDashboardT();
   const [activeDragItem, setActiveDragItem] = useState<DragItem | null>(null);
   const [mobileTab, setMobileTab] = useState<MobileTab>("day");
 
@@ -213,22 +194,22 @@ export function DashboardClient() {
               {
                 tab: "cards",
                 icon: <LayoutGrid className="w-5 h-5" />,
-                label: "Thẻ",
+                label: t.tabCards,
               },
               {
                 tab: "day",
                 icon: <CalendarDays className="w-5 h-5" />,
-                label: "Ngày",
+                label: t.tabDay,
               },
               {
                 tab: "month",
                 icon: <Calendar className="w-5 h-5" />,
-                label: "Tháng",
+                label: t.tabMonth,
               },
               {
                 tab: "report",
                 icon: <BarChart2 className="w-5 h-5" />,
-                label: "Báo cáo",
+                label: t.tabReport,
               },
             ] as { tab: MobileTab; icon: React.ReactNode; label: string }[]
           ).map(({ tab, icon, label }) => (

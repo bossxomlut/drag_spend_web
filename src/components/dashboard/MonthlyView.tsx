@@ -14,8 +14,8 @@ import {
   addMonths,
   subMonths,
 } from "date-fns";
-import { vi } from "date-fns/locale";
 import { useAppStore } from "@/store/useAppStore";
+import { useLocale } from "@/hooks/useLocale";
 import { useMonthlyTransactions } from "@/hooks/useData";
 import { formatCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 
 export function MonthlyView() {
+  const locale = useLocale();
   const selectedDate = useAppStore((s) => s.selectedDate);
   const setSelectedDate = useAppStore((s) => s.setSelectedDate);
   const viewMonth = useAppStore((s) => s.viewMonth);
@@ -85,7 +86,7 @@ export function MonthlyView() {
             <ChevronLeft className="w-4 h-4" />
           </Button>
           <h3 className="font-semibold text-slate-700 text-sm capitalize">
-            {format(firstOfMonth, "MMMM yyyy", { locale: vi })}
+            {format(firstOfMonth, "MMMM yyyy", { locale })}
           </h3>
           <Button
             variant="ghost"
@@ -252,7 +253,7 @@ export function MonthlyView() {
                           "font-medium",
                           isSelected && "text-white",
                         )}>
-                        {format(parseISO(date), "d/MM (EEE)", { locale: vi })}
+                        {format(parseISO(date), "d/MM (EEE)", { locale })}
                       </span>
                       <span
                         className={cn(

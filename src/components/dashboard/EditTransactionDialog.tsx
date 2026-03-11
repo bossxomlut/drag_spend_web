@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Transaction, TransactionType } from "@/types";
+import { useDashboardT } from "@/hooks/useDashboardT";
 
 interface Props {
   open: boolean;
@@ -32,6 +33,7 @@ export function EditTransactionDialog({
 }: Props) {
   const categories = useAppStore((s) => s.categories);
   const updateTransaction = useUpdateTransaction();
+  const t = useDashboardT();
 
   const [title, setTitle] = useState(transaction.title);
   const [amount, setAmount] = useState(String(transaction.amount));
@@ -79,7 +81,7 @@ export function EditTransactionDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa giao dịch</DialogTitle>
+            <DialogTitle>{t.editTxnDialogTitle}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 pt-1">
             {/* Type */}
@@ -96,7 +98,7 @@ export function EditTransactionDialog({
                     ? "bg-red-500 text-white border-red-500"
                     : "bg-white text-slate-500 border-slate-200 hover:border-red-300",
                 )}>
-                Chi tiêu
+                {t.expense}
               </button>
               <button
                 type="button"
@@ -110,13 +112,13 @@ export function EditTransactionDialog({
                     ? "bg-green-500 text-white border-green-500"
                     : "bg-white text-slate-500 border-slate-200 hover:border-green-300",
                 )}>
-                Thu nhập
+                {t.income}
               </button>
             </div>
 
             {/* Title */}
             <div className="space-y-1.5">
-              <Label>Tên</Label>
+              <Label>{t.txnTitleLabel}</Label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -126,28 +128,26 @@ export function EditTransactionDialog({
 
             {/* Amount */}
             <div className="space-y-1.5">
-              <Label>Số tiền</Label>
+              <Label>{t.txnAmountLabel}</Label>
               <Input
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="VD: 35k, 1.5tr"
+                placeholder={t.txnAmountPlaceholder}
                 required
               />
-              <p className="text-[11px] text-slate-400">
-                25k = 25,000đ · 1.5tr = 1,500,000đ
-              </p>
+              <p className="text-[11px] text-slate-400">{t.txnAmountHint}</p>
             </div>
 
             {/* Category */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label>Danh mục</Label>
+                <Label>{t.categoryLabel}</Label>
                 <button
                   type="button"
                   onClick={() => setCreateCatOpen(true)}
                   className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700">
                   <Tag className="w-3.5 h-3.5" />
-                  Thêm danh mục
+                  {t.addCategoryBtn}
                 </button>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -177,11 +177,11 @@ export function EditTransactionDialog({
 
             {/* Note */}
             <div className="space-y-1.5">
-              <Label>Ghi chú</Label>
+              <Label>{t.txnNoteLabel}</Label>
               <Input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Ghi chú thêm..."
+                placeholder={t.txnNotePlaceholder}
               />
             </div>
 
@@ -190,10 +190,10 @@ export function EditTransactionDialog({
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}>
-                Hủy
+                {t.cancelBtn}
               </Button>
               <Button type="submit" disabled={updateTransaction.isPending}>
-                {updateTransaction.isPending ? "Đang lưu..." : "Lưu"}
+                {updateTransaction.isPending ? t.saving : t.saveBtn}
               </Button>
             </DialogFooter>
           </form>

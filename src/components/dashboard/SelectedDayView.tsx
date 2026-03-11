@@ -9,8 +9,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { format, addDays, subDays, isToday, parseISO } from "date-fns";
-import { vi } from "date-fns/locale";
 import { useAppStore } from "@/store/useAppStore";
+import { useLocale } from "@/hooks/useLocale";
 import {
   useTransactions,
   useDeleteTransaction,
@@ -42,9 +42,12 @@ import {
   Loader2,
 } from "lucide-react";
 import { EditTransactionDialog } from "./EditTransactionDialog";
+import { useDashboardT } from "@/hooks/useDashboardT";
 import type { Transaction } from "@/types";
 
 export function SelectedDayView() {
+  const locale = useLocale();
+  const t = useDashboardT();
   const selectedDate = useAppStore((s) => s.selectedDate);
   const setSelectedDate = useAppStore((s) => s.setSelectedDate);
   const transactionsByDate = useAppStore((s) => s.transactionsByDate);
@@ -120,16 +123,16 @@ export function SelectedDayView() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-slate-800 capitalize">
-                  {format(parsedDate, "EEEE", { locale: vi })}
+                  {format(parsedDate, "EEEE", { locale })}
                 </h2>
                 {todayFlag && (
                   <span className="text-[11px] font-semibold bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full">
-                    Hôm nay
+                    {t.today}
                   </span>
                 )}
               </div>
               <p className="text-sm text-slate-400">
-                {format(parsedDate, "d MMMM yyyy", { locale: vi })}
+                {format(parsedDate, "d MMMM yyyy", { locale })}
               </p>
             </div>
             <Button
@@ -148,7 +151,7 @@ export function SelectedDayView() {
               className="h-8 text-xs gap-1.5"
               onClick={goToday}>
               <CalendarDays className="w-3.5 h-3.5" />
-              Hôm nay
+              {t.today}
             </Button>
           )}
         </div>
@@ -189,7 +192,7 @@ export function SelectedDayView() {
                     : `${net > 0 ? "+" : ""}${formatCompact(net)}`}
                 </span>
                 <span className="text-xs text-slate-400">
-                  {transactions.length} giao dịch
+                  {transactions.length} {t.transactions}
                 </span>
               </>
             )}
@@ -223,7 +226,7 @@ export function SelectedDayView() {
                 "text-sm font-medium transition-colors",
                 isOver ? "text-indigo-600" : "text-slate-400",
               )}>
-              {isOver ? "Thả thẻ vào đây" : "Kéo thẻ chi tiêu vào đây"}
+              {isOver ? t.dropHover : t.dropEmpty}
             </p>
             {!isOver && (
               <Button
@@ -237,7 +240,7 @@ export function SelectedDayView() {
                 ) : (
                   <Copy className="w-3.5 h-3.5" />
                 )}
-                Như hôm qua
+                {t.copyYesterday}
               </Button>
             )}
           </div>
@@ -248,7 +251,7 @@ export function SelectedDayView() {
               <section>
                 <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <TrendingDown className="w-3 h-3 text-red-400" />
-                  Chi tiêu
+                  {t.expense}
                 </p>
                 <SortableContext
                   items={expenses.map((t) => t.id)}
@@ -267,7 +270,7 @@ export function SelectedDayView() {
               <section>
                 <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <TrendingUp className="w-3 h-3 text-green-500" />
-                  Thu nhập
+                  {t.income}
                 </p>
                 <SortableContext
                   items={incomes.map((t) => t.id)}
@@ -288,7 +291,7 @@ export function SelectedDayView() {
       {transactions.length > 0 && (
         <div className="border-t border-slate-100 px-5 py-3 bg-slate-50 flex items-center justify-between">
           <span className="text-xs text-slate-500">
-            {transactions.length} giao dịch
+            {transactions.length} {t.transactions}
           </span>
           <div className="flex items-center gap-4 text-sm">
             {totalIncome > 0 && (
@@ -322,7 +325,7 @@ function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Xác nhận",
+  confirmLabel,
   danger = false,
   onConfirm,
 }: {
@@ -334,6 +337,7 @@ function ConfirmDialog({
   danger?: boolean;
   onConfirm: () => void;
 }) {
+  const t = useDashboardT();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
@@ -355,7 +359,7 @@ function ConfirmDialog({
               variant="outline"
               size="sm"
               onClick={() => onOpenChange(false)}>
-              Huỷ
+              {t.cancel}
             </Button>
             <Button
               type="submit"
@@ -383,6 +387,7 @@ function TransactionItemFull({
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const deleteTransaction = useDeleteTransaction();
   const saveAsCard = useSaveTransactionAsCard();
+  const t = useDashboardT();
 
   const {
     attributes,
@@ -449,19 +454,19 @@ function TransactionItemFull({
           <button
             onClick={() => setEditConfirm(true)}
             className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 hover:text-indigo-500 transition-colors"
-            title="Chỉnh sửa">
+            title={t.btnTitleEdit}>
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => saveAsCard.mutate(txn)}
             className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 hover:text-amber-500 transition-colors"
-            title="Lưu thành thẻ mới">
+            title={t.btnTitleSave}>
             <BookmarkPlus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setDeleteConfirm(true)}
             className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-            title="Xóa">
+            title={t.btnTitleDelete}>
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -471,9 +476,9 @@ function TransactionItemFull({
       <ConfirmDialog
         open={editConfirm}
         onOpenChange={setEditConfirm}
-        title="Chỉnh sửa giao dịch?"
+        title={t.editTxnTitle}
         description={`"${txn.title}" — ${formatVND(txn.amount)}`}
-        confirmLabel="Tiếp tục chỉnh sửa"
+        confirmLabel={t.editTxnConfirm}
         onConfirm={() => setEditOpen(true)}
       />
 
@@ -481,9 +486,9 @@ function TransactionItemFull({
       <ConfirmDialog
         open={deleteConfirm}
         onOpenChange={setDeleteConfirm}
-        title="Xóa giao dịch này?"
-        description={`"${txn.title}" — ${formatVND(txn.amount)} sẽ bị xóa vĩnh viễn.`}
-        confirmLabel="Xóa"
+        title={t.deleteTxnTitle}
+        description={`"${txn.title}" — ${formatVND(txn.amount)} ${t.deleteTxnSuffix}`}
+        confirmLabel={t.deleteTxnConfirm}
         danger
         onConfirm={() =>
           deleteTransaction.mutate({ id: txn.id, date: txn.date })

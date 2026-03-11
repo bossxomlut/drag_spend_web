@@ -10,14 +10,15 @@ import {
   format,
   isToday,
 } from "date-fns";
-import { vi } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/hooks/useLocale";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useAppStore } from "@/store/useAppStore";
 import { DayColumn } from "./DayColumn";
 import { cn } from "@/lib/utils";
 
 export function WeekCalendar() {
+  const locale = useLocale();
   const selectedDate = useAppStore((s) => s.selectedDate);
   const setSelectedDate = useAppStore((s) => s.setSelectedDate);
   const [, startTransition] = useTransition();
@@ -43,7 +44,7 @@ export function WeekCalendar() {
     startTransition(() => setSelectedDate(format(today, "yyyy-MM-dd")));
   }
 
-  const monthLabel = format(weekStart, "MMMM yyyy", { locale: vi });
+  const monthLabel = format(weekStart, "MMMM yyyy", { locale });
 
   return (
     <div className="flex flex-col gap-3 min-w-[700px]">
@@ -99,7 +100,7 @@ export function WeekCalendar() {
                       : "hover:bg-slate-100 text-slate-600",
                 )}>
                 <span className="text-[10px] font-medium uppercase tracking-wide">
-                  {format(day, "EEE", { locale: vi })}
+                  {format(day, "EEE", { locale })}
                 </span>
                 <span
                   className={cn(

@@ -8,11 +8,12 @@ import {
   endOfMonth,
   parseISO,
 } from "date-fns";
-import { vi } from "date-fns/locale";
 import { useAppStore } from "@/store/useAppStore";
+import { useLocale } from "@/hooks/useLocale";
 import { useMonthlyReport } from "@/hooks/useData";
 import { formatCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
+import { useDashboardT } from "@/hooks/useDashboardT";
 import {
   TrendingDown,
   TrendingUp,
@@ -47,6 +48,8 @@ const CATEGORY_COLORS = [
 ];
 
 export function ReportView() {
+  const locale = useLocale();
+  const t = useDashboardT();
   const viewMonth = useAppStore((s) => s.viewMonth);
   const { data: reportData = [] } = useMonthlyReport(viewMonth);
 
@@ -86,7 +89,7 @@ export function ReportView() {
       const key = row.category_id ?? "__none__";
       if (!map[key]) {
         map[key] = {
-          name: row.category_name ?? "Khác",
+          name: row.category_name ?? t.categoryOther,
           icon: row.category_icon ?? "📦",
           value: 0,
           color: row.category_color ?? "#64748b",
@@ -95,7 +98,7 @@ export function ReportView() {
       map[key].value += Number(row.total);
     }
     return Object.values(map).sort((a, b) => b.value - a.value);
-  }, [reportData]);
+  }, [reportData, t]);
 
   // ── Summary stats ────────────────────────────────────────
   const stats = useMemo(() => {
@@ -124,10 +127,10 @@ export function ReportView() {
       {/* Header */}
       <div className="px-5 pt-5 pb-3 border-b border-slate-100 flex-shrink-0">
         <h3 className="font-semibold text-slate-700 text-sm">
-          Báo cáo {month}/{year}
+          {t.reportTitle(month, year)}
         </h3>
         <p className="text-[11px] text-slate-400 mt-0.5">
-          {format(firstOfMonth, "MMMM yyyy", { locale: vi })}
+          {format(firstOfMonth, "MMMM yyyy", { locale })}
         </p>
       </div>
 
@@ -135,28 +138,28 @@ export function ReportView() {
         {!hasData ? (
           <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
             <CalendarDays className="w-8 h-8 opacity-40" />
-            <p className="text-xs">Chưa có dữ liệu tháng này</p>
+            <p className="text-xs">{t.noReportData}</p>
           </div>
         ) : (
           <>
             {/* ── Quick stat cards ─────────────────────────── */}
             <div className="grid grid-cols-2 gap-2">
               <StatCard
-                label="Chi tiêu TB/ngày"
+                label={t.statAvgDaily}
                 value={`${formatCompact(stats.avgDaily)}`}
-                sub={`${stats.activeDayCount} ngày có chi tiêu`}
+                sub={t.statDaysActive(stats.activeDayCount)}
                 icon={<Sigma className="w-3.5 h-3.5 text-indigo-400" />}
                 color="indigo"
               />
               <StatCard
-                label="Ngày nhiều nhất"
+                label={t.statTopDay}
                 value={
                   stats.maxDay.date ? formatCompact(stats.maxDay.expense) : "—"
                 }
                 sub={
                   stats.maxDay.date
                     ? format(parseISO(stats.maxDay.date), "d/MM (EEE)", {
-                        locale: vi,
+                        locale,
                       })
                     : ""
                 }
@@ -164,13 +167,13 @@ export function ReportView() {
                 color="orange"
               />
               <StatCard
-                label="Tổng chi tiêu"
+                label={t.statTotalExpense}
                 value={`-${formatCompact(stats.totalExpense)}`}
                 icon={<TrendingDown className="w-3.5 h-3.5 text-red-400" />}
                 color="red"
               />
               <StatCard
-                label="Tổng thu nhập"
+                label={t.statTotalIncome}
                 value={`+${formatCompact(stats.totalIncome)}`}
                 icon={<TrendingUp className="w-3.5 h-3.5 text-green-500" />}
                 color="green"
@@ -180,7 +183,7 @@ export function ReportView() {
             {/* ── Daily expense bar chart ───────────────────── */}
             <section>
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                Chi tiêu theo ngày
+                {t.chartByDay}
               </p>
               <ResponsiveContainer width="100%" height={140}>
                 <BarChart
@@ -203,7 +206,7 @@ export function ReportView() {
                   <Tooltip
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     formatter={(value: any) => [formatCompact(Number(value))]}
-                    labelFormatter={(label) => `Ngày ${label}`}
+                    labelFormatter={(label) => t.chartDayLabel(label)}
                     contentStyle={{
                       fontSize: 11,
                       borderRadius: 8,
@@ -216,14 +219,14 @@ export function ReportView() {
                       dataKey="income"
                       fill="#86efac"
                       radius={[3, 3, 0, 0]}
-                      name="Thu nhập"
+                      name={t.chartBarIncome}
                     />
                   )}
                   <Bar
                     dataKey="expense"
                     fill="#f87171"
                     radius={[3, 3, 0, 0]}
-                    name="Chi tiêu"
+                    name={t.chartBarExpense}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -233,7 +236,7 @@ export function ReportView() {
             {categoryData.length > 0 && (
               <section>
                 <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                  Chi tiêu theo danh mục
+                  {t.chartByCat}
                 </p>
                 <ResponsiveContainer width="100%" height={180}>
                   <PieChart>

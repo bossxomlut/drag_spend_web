@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Check, Tag } from "lucide-react";
 import type { SpendingCard, TransactionType } from "@/types";
+import { useDashboardT } from "@/hooks/useDashboardT";
 
 interface Variant {
   id?: string;
@@ -35,6 +36,7 @@ interface Props {
 
 export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
   const categories = useAppStore((s) => s.categories);
+  const t = useDashboardT();
   const createCard = useCreateCard();
   const updateCard = useUpdateCard();
 
@@ -152,7 +154,7 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editCard ? "Chỉnh sửa thẻ" : "Tạo thẻ mới"}
+              {editCard ? t.createCardTitleEdit : t.createCardTitleNew}
             </DialogTitle>
           </DialogHeader>
 
@@ -171,7 +173,7 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
                     ? "bg-red-500 text-white border-red-500"
                     : "bg-white text-slate-500 border-slate-200 hover:border-red-300",
                 )}>
-                Chi tiêu
+                {t.expense}
               </button>
               <button
                 type="button"
@@ -185,17 +187,17 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
                     ? "bg-green-500 text-white border-green-500"
                     : "bg-white text-slate-500 border-slate-200 hover:border-green-300",
                 )}>
-                Thu nhập
+                {t.income}
               </button>
             </div>
 
             {/* Title */}
             <div className="space-y-1.5">
               <Label>
-                Tên thẻ <span className="text-red-500">*</span>
+                {t.cardNameLabel} <span className="text-red-500">*</span>
               </Label>
               <Input
-                placeholder="VD: Ăn sáng, Cà phê, Lương..."
+                placeholder={t.cardNamePlaceholder}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -205,13 +207,13 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
             {/* Category */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label>Danh mục</Label>
+                <Label>{t.categoryLabel}</Label>
                 <button
                   type="button"
                   onClick={() => setCreateCatOpen(true)}
                   className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700">
                   <Tag className="w-3.5 h-3.5" />
-                  Thêm danh mục
+                  {t.addCategoryBtn}
                 </button>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -243,10 +245,10 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>
-                  Số tiền
+                  {t.amountLabel}
                   {variants.length > 1 && (
                     <span className="text-xs text-slate-400 ml-1 font-normal">
-                      (chọn mặc định ★)
+                      {t.defaultHint}
                     </span>
                   )}
                 </Label>
@@ -257,7 +259,7 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
                   className="h-7 text-xs text-indigo-600 hover:text-indigo-700"
                   onClick={addVariant}>
                   <Plus className="w-3.5 h-3.5 mr-1" />
-                  Thêm mức giá
+                  {t.addVariantBtn}
                 </Button>
               </div>
 
@@ -266,7 +268,7 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
                   <div key={idx} className="flex items-center gap-2">
                     <button
                       type="button"
-                      title="Đặt làm mặc định"
+                      title={t.setDefaultTitle}
                       onClick={() => setDefault(idx)}
                       className={cn(
                         "shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
@@ -280,7 +282,7 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
                     </button>
 
                     <Input
-                      placeholder="Nhãn (tùy chọn)"
+                      placeholder={t.variantLabelPlaceholder}
                       value={v.label}
                       onChange={(e) =>
                         updateVariant(idx, "label", e.target.value)
@@ -289,7 +291,7 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
                     />
 
                     <Input
-                      placeholder="VD: 25k, 1tr"
+                      placeholder={t.variantAmountPlaceholder}
                       value={v.amount}
                       onChange={(e) =>
                         updateVariant(idx, "amount", e.target.value)
@@ -311,16 +313,14 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-slate-400">
-                Nhập số tiền: 25k = 25,000đ · 1.5tr = 1,500,000đ
-              </p>
+              <p className="text-[11px] text-slate-400">{t.amountHintCard}</p>
             </div>
 
             {/* Note */}
             <div className="space-y-1.5">
-              <Label>Ghi chú (tùy chọn)</Label>
+              <Label>{t.noteOptionalLabel}</Label>
               <Input
-                placeholder="Ghi chú thêm..."
+                placeholder={t.notePlaceholder}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
@@ -331,10 +331,14 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}>
-                Hủy
+                {t.cancelBtn}
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Đang lưu..." : editCard ? "Cập nhật" : "Tạo thẻ"}
+                {isPending
+                  ? t.saving
+                  : editCard
+                    ? t.updateCardBtn
+                    : t.createCardBtn}
               </Button>
             </DialogFooter>
           </form>

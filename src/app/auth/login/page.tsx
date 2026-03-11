@@ -1,34 +1,62 @@
-'use client'
+"use client";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
-import Link from 'next/link'
-import { TrendingDown } from 'lucide-react'
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import Link from "next/link";
+import { TrendingDown } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useUILanguage } from "@/hooks/useUILanguage";
+
+const T = {
+  vi: {
+    subtitle: "Quản lý thu chi thông minh",
+    heading: "Đăng nhập",
+    password: "Mật khẩu",
+    submit: "Đăng nhập",
+    submitting: "Đang đăng nhập...",
+    noAccount: "Chưa có tài khoản?",
+    register: "Đăng ký",
+  },
+  en: {
+    subtitle: "Smart expense tracking",
+    heading: "Sign in",
+    password: "Password",
+    submit: "Sign in",
+    submitting: "Signing in...",
+    noAccount: "Don't have an account?",
+    register: "Register",
+  },
+};
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [lang] = useUILanguage();
+  const t = T[lang];
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
+    e.preventDefault();
+    setLoading(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setLoading(false);
     if (error) {
-      toast.error(error.message)
+      toast.error(error.message);
     } else {
-      router.push('/dashboard')
-      router.refresh()
+      router.push("/dashboard");
+      router.refresh();
     }
   }
 
@@ -43,11 +71,16 @@ export default function LoginPage() {
             </div>
             <span className="text-2xl font-bold">Drag Spend</span>
           </div>
-          <p className="text-slate-400 text-sm">Quản lý thu chi thông minh</p>
+          <p className="text-slate-400 text-sm">{t.subtitle}</p>
+          <div className="flex justify-center mt-3">
+            <LanguageSwitcher />
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-xl font-semibold text-slate-800 mb-6">Đăng nhập</h1>
+          <h1 className="text-xl font-semibold text-slate-800 mb-6">
+            {t.heading}
+          </h1>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -61,7 +94,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mật khẩu</Label>
+              <Label htmlFor="password">{t.password}</Label>
               <Input
                 id="password"
                 type="password"
@@ -72,17 +105,19 @@ export default function LoginPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+              {loading ? t.submitting : t.submit}
             </Button>
           </form>
           <p className="text-center text-sm text-slate-500 mt-4">
-            Chưa có tài khoản?{' '}
-            <Link href="/auth/register" className="text-indigo-600 hover:underline font-medium">
-              Đăng ký
+            {t.noAccount}{" "}
+            <Link
+              href="/auth/register"
+              className="text-indigo-600 hover:underline font-medium">
+              {t.register}
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

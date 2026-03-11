@@ -29,13 +29,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const PUBLIC_PATHS = [
-    "/",
-    "/api/health",
-    // thêm path mới vào đây
-  ];
+  const PUBLIC_PATHS = ["/", "/api/health"];
 
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
+  const isOnboarding = request.nextUrl.pathname.startsWith("/onboarding");
   const isPublic =
     isAuthPage || PUBLIC_PATHS.includes(request.nextUrl.pathname);
 
@@ -45,6 +42,21 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // Redirect to language selection if user hasn't picked a language yet
+  if (user && !isOnboarding && !isAuthPage) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("language")
+      .eq("id", user.id)
+      .single();
+
+    if (profile && profile.language === null) {
+      return NextResponse.redirect(
+        new URL("/onboarding/language", request.url),
+      );
+    }
   }
 
   return supabaseResponse;

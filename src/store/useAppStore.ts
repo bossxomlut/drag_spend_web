@@ -33,6 +33,10 @@ interface AppState {
   // ── Hidden cards per date (visual hint after drag/quick-add) ────
   hiddenCardsByDate: Record<string, string[]>; // date → cardIds
   addHiddenCard: (date: string, cardId: string) => void;
+  // ── Language / locale ──────────────────────────────────────
+  language: string;
+  setLanguage: (lang: string) => void;
+
   // ── UI state ───────────────────────────────────────────────
   isDragging: boolean;
   setIsDragging: (v: boolean) => void;
@@ -116,6 +120,10 @@ export const useAppStore = create<AppState>((set) => ({
         [date]: [...(s.hiddenCardsByDate[date] ?? []), cardId],
       },
     })),
+
+  // ── Language / locale ──────────────────────────────────────
+  language: "vi",
+  setLanguage: (language) => set({ language }),
 
   // ── UI ─────────────────────────────────────────────────────
   isDragging: false,

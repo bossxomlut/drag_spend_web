@@ -12,10 +12,53 @@ import type {
   CreateCardPayload,
   CreateTransactionPayload,
   UpdateTransactionPayload,
+  Profile,
 } from "@/types";
 import { toast } from "sonner";
 
 const supabase = createClient();
+
+// ─── Profile ─────────────────────────────────────────────────
+
+export function useProfile() {
+  const setLanguage = useAppStore((s) => s.setLanguage);
+
+  return useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      if (error) throw error;
+      const profile = data as Profile;
+      // Priority: localStorage (explicit user choice before login) > DB
+      const storedLang = localStorage.getItem("ui_language");
+      const effectiveLang =
+        storedLang === "vi" || storedLang === "en"
+          ? storedLang
+          : profile.language;
+      if (effectiveLang) {
+        setLanguage(effectiveLang);
+        localStorage.setItem("ui_language", effectiveLang);
+        // Silently sync DB if the user had switched language on the login page
+        if (profile.language && effectiveLang !== profile.language) {
+          supabase
+            .from("profiles")
+            .update({ language: effectiveLang })
+            .eq("id", user.id)
+            .then(() => {});
+        }
+      }
+      return profile;
+    },
+  });
+}
 
 // ─── Categories ─────────────────────────────────────────────
 

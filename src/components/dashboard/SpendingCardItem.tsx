@@ -24,6 +24,7 @@ import { Pencil, Trash2, GripVertical, Plus, Check } from "lucide-react";
 import { CreateCardDialog } from "./CreateCardDialog";
 import { toast } from "sonner";
 import type { SpendingCard } from "@/types";
+import { useDashboardT } from "@/hooks/useDashboardT";
 
 interface Props {
   card: SpendingCard;
@@ -33,6 +34,7 @@ export function SpendingCardItem({ card }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
+  const t = useDashboardT();
   const deleteCard = useDeleteCard();
   const setDefaultVariant = useSetDefaultVariant();
   const createTransaction = useCreateTransaction();
@@ -82,11 +84,11 @@ export function SpendingCardItem({ card }: Props) {
         onSuccess: (real) => {
           removeTransaction(tempId, selectedDate);
           addTransaction(real);
-          toast.success(`Đã thêm "${card.title}"`);
+          toast.success(t.toastAdded(card.title));
         },
         onError: () => {
           removeTransaction(tempId, selectedDate);
-          toast.error("Thêm thất bại, thử lại");
+          toast.error(t.toastError);
         },
       },
     );
@@ -216,7 +218,7 @@ export function SpendingCardItem({ card }: Props) {
                     ? "bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 active:scale-90"
                     : "bg-green-50 text-green-500 hover:bg-green-100 hover:text-green-700 active:scale-90",
               )}
-              title="Thêm vào ngày đang chọn">
+              title={t.quickAddTitle}>
               {justAdded ? (
                 <Check className="w-3.5 h-3.5" />
               ) : (
@@ -250,7 +252,7 @@ export function SpendingCardItem({ card }: Props) {
             {...attributes}
             {...listeners}
             className="hidden lg:flex flex-1 items-center justify-center px-2 cursor-grab active:cursor-grabbing touch-none min-w-[28px]"
-            title="Kéo để thêm vào ngày">
+            title={t.dragTitle}>
             <GripVertical className="w-4 h-4 text-slate-200 group-hover:text-slate-400 transition-colors" />
           </div>
         </div>
@@ -269,10 +271,10 @@ export function SpendingCardItem({ card }: Props) {
               setDeleteConfirm(false);
             }}>
             <DialogHeader>
-              <DialogTitle>Xóa thẻ này?</DialogTitle>
+              <DialogTitle>{t.deleteCardTitle}</DialogTitle>
               <p className="text-sm text-slate-500 mt-1">
-                Thẻ <strong>&ldquo;{card.title}&rdquo;</strong> sẽ bị xóa vĩnh
-                viễn.
+                {t.deleteCardPrefix} <strong>&ldquo;{card.title}&rdquo;</strong>{" "}
+                {t.deleteCardSuffix}
               </p>
             </DialogHeader>
             <DialogFooter className="gap-2 mt-2">
@@ -281,14 +283,14 @@ export function SpendingCardItem({ card }: Props) {
                 variant="outline"
                 size="sm"
                 onClick={() => setDeleteConfirm(false)}>
-                Huỷ
+                {t.cancel}
               </Button>
               <Button
                 type="submit"
                 size="sm"
                 className="bg-red-500 hover:bg-red-600 text-white"
                 disabled={deleteCard.isPending}>
-                Xóa
+                {t.deleteBtn}
               </Button>
             </DialogFooter>
           </form>

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { TransactionType } from "@/types";
+import { useDashboardT } from "@/hooks/useDashboardT";
 
 const PRESET_COLORS = [
   "#f59e0b",
@@ -65,6 +66,7 @@ export function CreateCategoryDialog({
   onCreated,
 }: Props) {
   const createCategory = useCreateCategory();
+  const t = useDashboardT();
 
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("📦");
@@ -97,7 +99,7 @@ export function CreateCategoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Thêm danh mục mới</DialogTitle>
+          <DialogTitle>{t.createCatTitle}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
@@ -112,7 +114,7 @@ export function CreateCategoryDialog({
                   ? "bg-red-500 text-white border-red-500"
                   : "bg-white text-slate-500 border-slate-200 hover:border-red-300",
               )}>
-              Chi tiêu
+              {t.expense}
             </button>
             <button
               type="button"
@@ -123,17 +125,17 @@ export function CreateCategoryDialog({
                   ? "bg-green-500 text-white border-green-500"
                   : "bg-white text-slate-500 border-slate-200 hover:border-green-300",
               )}>
-              Thu nhập
+              {t.income}
             </button>
           </div>
 
           {/* Name */}
           <div className="space-y-1.5">
             <Label>
-              Tên danh mục <span className="text-red-500">*</span>
+              {t.catNameLabel} <span className="text-red-500">*</span>
             </Label>
             <Input
-              placeholder="VD: Ăn sáng, Gym, Lương..."
+              placeholder={t.catNamePlaceholder}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -143,7 +145,7 @@ export function CreateCategoryDialog({
 
           {/* Icon */}
           <div className="space-y-1.5">
-            <Label>Biểu tượng</Label>
+            <Label>{t.catIconLabel}</Label>
             <div className="flex items-center gap-2">
               <Input
                 value={icon}
@@ -172,7 +174,7 @@ export function CreateCategoryDialog({
 
           {/* Color */}
           <div className="space-y-1.5">
-            <Label>Màu sắc</Label>
+            <Label>{t.catColorLabel}</Label>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -201,11 +203,11 @@ export function CreateCategoryDialog({
 
           {/* Preview */}
           <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-100">
-            <span className="text-xs text-slate-500">Xem trước:</span>
+            <span className="text-xs text-slate-500">{t.catPreview}</span>
             <span
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs text-white"
               style={{ backgroundColor: color }}>
-              {icon} {name || "Tên danh mục"}
+              {icon} {name || t.catFallbackName}
             </span>
           </div>
 
@@ -214,10 +216,10 @@ export function CreateCategoryDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}>
-              Hủy
+              {t.cancelBtn}
             </Button>
             <Button type="submit" disabled={createCategory.isPending}>
-              {createCategory.isPending ? "Đang lưu..." : "Thêm"}
+              {createCategory.isPending ? t.saving : t.addCatBtn}
             </Button>
           </DialogFooter>
         </form>

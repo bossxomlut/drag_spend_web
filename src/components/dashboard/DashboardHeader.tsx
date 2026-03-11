@@ -11,9 +11,12 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { TrendingDown, LogOut, User } from "lucide-react";
 import { toast } from "sonner";
+import { DashboardLanguageSwitcher } from "@/components/dashboard/DashboardLanguageSwitcher";
+import { useDashboardT } from "@/hooks/useDashboardT";
 
 export function DashboardHeader() {
   const router = useRouter();
+  const t = useDashboardT();
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
@@ -55,7 +58,8 @@ export function DashboardHeader() {
         </span>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        <DashboardLanguageSwitcher />
         {/* User info popover */}
         <Popover>
           <PopoverTrigger className="text-slate-400 hover:text-white hover:bg-slate-800 h-8 w-8 rounded-full flex items-center justify-center transition-colors">
@@ -88,7 +92,7 @@ export function DashboardHeader() {
               onClick={handleLogout}
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
               <LogOut className="w-3.5 h-3.5" />
-              Đăng xuất
+              {t.logout}
             </button>
           </PopoverContent>
         </Popover>

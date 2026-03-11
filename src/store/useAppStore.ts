@@ -30,7 +30,9 @@ interface AppState {
   updateTransaction: (txn: Transaction) => void;
   removeTransaction: (id: string, date: string) => void;
   reorderTransactions: (date: string, transactions: Transaction[]) => void;
-
+  // ── Hidden cards per date (visual hint after drag/quick-add) ────
+  hiddenCardsByDate: Record<string, string[]>; // date → cardIds
+  addHiddenCard: (date: string, cardId: string) => void;
   // ── UI state ───────────────────────────────────────────────
   isDragging: boolean;
   setIsDragging: (v: boolean) => void;
@@ -103,6 +105,16 @@ export const useAppStore = create<AppState>((set) => ({
   reorderTransactions: (date, transactions) =>
     set((s) => ({
       transactionsByDate: { ...s.transactionsByDate, [date]: transactions },
+    })),
+
+  // ── Hidden cards ───────────────────────────────────────────
+  hiddenCardsByDate: {},
+  addHiddenCard: (date, cardId) =>
+    set((s) => ({
+      hiddenCardsByDate: {
+        ...s.hiddenCardsByDate,
+        [date]: [...(s.hiddenCardsByDate[date] ?? []), cardId],
+      },
     })),
 
   // ── UI ─────────────────────────────────────────────────────

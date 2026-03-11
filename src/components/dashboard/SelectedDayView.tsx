@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useDroppable, useDndMonitor } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -48,6 +48,7 @@ export function SelectedDayView() {
   const selectedDate = useAppStore((s) => s.selectedDate);
   const setSelectedDate = useAppStore((s) => s.setSelectedDate);
   const transactionsByDate = useAppStore((s) => s.transactionsByDate);
+  const [, startTransition] = useTransition();
 
   useTransactions(selectedDate);
   const copyFromYesterday = useCopyFromYesterday();
@@ -90,13 +91,17 @@ export function SelectedDayView() {
   const todayFlag = isToday(parsedDate);
 
   function goPrev() {
-    setSelectedDate(format(subDays(parsedDate, 1), "yyyy-MM-dd"));
+    startTransition(() =>
+      setSelectedDate(format(subDays(parsedDate, 1), "yyyy-MM-dd")),
+    );
   }
   function goNext() {
-    setSelectedDate(format(addDays(parsedDate, 1), "yyyy-MM-dd"));
+    startTransition(() =>
+      setSelectedDate(format(addDays(parsedDate, 1), "yyyy-MM-dd")),
+    );
   }
   function goToday() {
-    setSelectedDate(format(new Date(), "yyyy-MM-dd"));
+    startTransition(() => setSelectedDate(format(new Date(), "yyyy-MM-dd")));
   }
 
   return (

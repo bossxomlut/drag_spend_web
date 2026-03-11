@@ -23,7 +23,7 @@ import { DashboardHeader } from "./DashboardHeader";
 import { CardDragOverlay } from "./CardDragOverlay";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, CalendarDays, Calendar, BarChart2 } from "lucide-react";
-import type { DragItem, Transaction } from "@/types";
+import type { DragItem } from "@/types";
 
 type MobileTab = "cards" | "day" | "month" | "report";
 
@@ -56,22 +56,15 @@ export function DashboardClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const selectedDate = useAppStore((s) => s.selectedDate);
-  const transactionsByDate = useAppStore((s) => s.transactionsByDate);
   const setIsDragging = useAppStore((s) => s.setIsDragging);
   const addTransaction = useAppStore((s) => s.addTransaction);
   const removeTransaction = useAppStore((s) => s.removeTransaction);
+  const addHiddenCard = useAppStore((s) => s.addHiddenCard);
 
   const createTransaction = useCreateTransaction();
 
   const [activeDragItem, setActiveDragItem] = useState<DragItem | null>(null);
   const [mobileTab, setMobileTab] = useState<MobileTab>("day");
-  const [hiddenCardIds, setHiddenCardIds] = useState<Set<string>>(new Set());
-
-  // Reset hidden cards when the selected date changes
-  useEffect(() => {
-    setHiddenCardIds(new Set());
-  }, [selectedDate]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -113,7 +106,9 @@ export function DashboardClient() {
       const defaultVariant =
         card.variants?.find((v) => v.is_default) ?? card.variants?.[0];
       const amount = defaultVariant?.amount ?? 0;
-      const existingCount = (transactionsByDate[targetDate] ?? []).length;
+      const existingCount = (
+        useAppStore.getState().transactionsByDate[targetDate] ?? []
+      ).length;
 
       // ── Optimistic: add temp transaction instantly ──────────
       const tempId = `__opt__${Date.now()}`;
@@ -149,7 +144,7 @@ export function DashboardClient() {
           onSuccess: (real) => {
             removeTransaction(tempId, targetDate);
             addTransaction(real);
-            setHiddenCardIds((prev) => new Set([...prev, card.id]));
+            addHiddenCard(targetDate, card.id);
           },
           onError: () => {
             removeTransaction(tempId, targetDate);
@@ -177,7 +172,7 @@ export function DashboardClient() {
               "lg:w-86 lg:flex lg:flex-col",
               mobileTab === "cards" ? "flex flex-col flex-1" : "hidden",
             )}>
-            <CardPanel hiddenCardIds={hiddenCardIds} />
+            <CardPanel />
           </aside>
 
           {/* Column 2: Selected Day — lg+: w-72, mobile tab */}

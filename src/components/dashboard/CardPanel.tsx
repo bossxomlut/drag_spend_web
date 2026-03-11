@@ -10,13 +10,11 @@ import { Plus, Search, CalendarDays } from "lucide-react";
 import { SpendingCardItem } from "./SpendingCardItem";
 import { CreateCardDialog } from "./CreateCardDialog";
 
-export function CardPanel({
-  hiddenCardIds = new Set(),
-}: {
-  hiddenCardIds?: Set<string>;
-}) {
+export function CardPanel() {
   const cards = useAppStore((s) => s.cards);
   const selectedDate = useAppStore((s) => s.selectedDate);
+  const hiddenCardsByDate = useAppStore((s) => s.hiddenCardsByDate);
+  const hiddenCardIds = new Set(hiddenCardsByDate[selectedDate] ?? []);
   const [search, setSearch] = useState("");
   const [openCreate, setOpenCreate] = useState(false);
 

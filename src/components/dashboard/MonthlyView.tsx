@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import {
   format,
   startOfMonth,
@@ -33,6 +34,7 @@ export function MonthlyView() {
   const viewMonth = useAppStore((s) => s.viewMonth);
   const setViewMonth = useAppStore((s) => s.setViewMonth);
   const transactionsByDate = useAppStore((s) => s.transactionsByDate);
+  const [, startTransition] = useTransition();
 
   const yearMonth = viewMonth;
   useMonthlyTransactions(yearMonth);
@@ -122,7 +124,7 @@ export function MonthlyView() {
               <button
                 key={dateStr}
                 onClick={() => {
-                  setSelectedDate(dateStr);
+                  startTransition(() => setSelectedDate(dateStr));
                   // Sync view month if navigating to another month
                   const newMonth = format(day, "yyyy-MM");
                   if (newMonth !== viewMonth) setViewMonth(newMonth);
@@ -236,7 +238,9 @@ export function MonthlyView() {
                   return (
                     <button
                       key={date}
-                      onClick={() => setSelectedDate(date)}
+                      onClick={() =>
+                        startTransition(() => setSelectedDate(date))
+                      }
                       className={cn(
                         "w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all",
                         isSelected

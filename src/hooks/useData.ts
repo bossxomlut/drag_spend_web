@@ -436,6 +436,36 @@ export function useMonthlyTransactions(yearMonth: string) {
       return data as Transaction[];
     },
     enabled: !!yearMonth,
+    staleTime:
+      yearMonth < format(new Date(), "yyyy-MM") ? Infinity : 1000 * 60 * 5,
+  });
+}
+
+type MonthlyReportRow = {
+  date: string;
+  category_id: string | null;
+  category_name: string | null;
+  category_icon: string | null;
+  category_color: string | null;
+  type: "income" | "expense";
+  total: number;
+  tx_count: number;
+};
+
+// Aggregated report — DB groups by date+category, client only renders
+export function useMonthlyReport(yearMonth: string) {
+  return useQuery({
+    queryKey: ["report-month", yearMonth],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_monthly_report", {
+        p_year_month: yearMonth,
+      });
+      if (error) throw error;
+      return data as MonthlyReportRow[];
+    },
+    enabled: !!yearMonth,
+    staleTime:
+      yearMonth < format(new Date(), "yyyy-MM") ? Infinity : 1000 * 60 * 5,
   });
 }
 

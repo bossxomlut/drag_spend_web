@@ -10,7 +10,7 @@ import {
 } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useAppStore } from "@/store/useAppStore";
-import { useMonthlyTransactions } from "@/hooks/useData";
+import { useMonthlyReport } from "@/hooks/useData";
 import { formatCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import {
@@ -48,8 +48,7 @@ const CATEGORY_COLORS = [
 
 export function ReportView() {
   const viewMonth = useAppStore((s) => s.viewMonth);
-  const transactionsByDate = useAppStore((s) => s.transactionsByDate);
-  useMonthlyTransactions(viewMonth);
+  const { data: reportData = [] } = useMonthlyReport(viewMonth);
 
   const [year, month] = viewMonth.split("-").map(Number);
   const firstOfMonth = new Date(year, month - 1, 1);
@@ -60,18 +59,21 @@ export function ReportView() {
 
   // ── Daily bar chart data ─────────────────────────────────
   const dailyData = useMemo(() => {
+    const dayMap: Record<string, { expense: number; income: number }> = {};
+    for (const row of reportData) {
+      if (!dayMap[row.date]) dayMap[row.date] = { expense: 0, income: 0 };
+      if (row.type === "expense") dayMap[row.date].expense += Number(row.total);
+      else dayMap[row.date].income += Number(row.total);
+    }
     return days.map((day) => {
       const dateStr = format(day, "yyyy-MM-dd");
-      const txns = transactionsByDate[dateStr] ?? [];
-      const expense = txns
-        .filter((t) => t.type === "expense")
-        .reduce((s, t) => s + t.amount, 0);
-      const income = txns
-        .filter((t) => t.type === "income")
-        .reduce((s, t) => s + t.amount, 0);
-      return { day: format(day, "d"), date: dateStr, expense, income };
+      return {
+        day: format(day, "d"),
+        date: dateStr,
+        ...(dayMap[dateStr] ?? { expense: 0, income: 0 }),
+      };
     });
-  }, [transactionsByDate, viewMonth]);
+  }, [reportData, days]);
 
   // ── Category pie data ────────────────────────────────────
   const categoryData = useMemo(() => {
@@ -79,25 +81,21 @@ export function ReportView() {
       string,
       { name: string; icon: string; value: number; color: string }
     > = {};
-    Object.entries(transactionsByDate).forEach(([date, txns]) => {
-      if (!date.startsWith(viewMonth)) return;
-      txns
-        .filter((t) => t.type === "expense")
-        .forEach((t) => {
-          const key = t.category_id ?? "__none__";
-          if (!map[key]) {
-            map[key] = {
-              name: t.category?.name ?? "Khác",
-              icon: t.category?.icon ?? "📦",
-              value: 0,
-              color: t.category?.color ?? "#64748b",
-            };
-          }
-          map[key].value += t.amount;
-        });
-    });
+    for (const row of reportData) {
+      if (row.type !== "expense") continue;
+      const key = row.category_id ?? "__none__";
+      if (!map[key]) {
+        map[key] = {
+          name: row.category_name ?? "Khác",
+          icon: row.category_icon ?? "📦",
+          value: 0,
+          color: row.category_color ?? "#64748b",
+        };
+      }
+      map[key].value += Number(row.total);
+    }
     return Object.values(map).sort((a, b) => b.value - a.value);
-  }, [transactionsByDate, viewMonth]);
+  }, [reportData]);
 
   // ── Summary stats ────────────────────────────────────────
   const stats = useMemo(() => {

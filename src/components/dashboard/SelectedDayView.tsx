@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useTransition, useMemo, useCallback, memo } from "react";
+import {
+  useState,
+  useTransition,
+  useMemo,
+  useCallback,
+  memo,
+  useEffect,
+} from "react";
 import { useDroppable, useDndMonitor } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -70,6 +77,10 @@ export function SelectedDayView() {
     (txn: Transaction) => saveAsCard.mutate(txn),
     [saveAsCard],
   );
+  const [pendingEditTxn, setPendingEditTxn] = useState<Transaction | null>(null);
+  const [pendingDeleteTxn, setPendingDeleteTxn] =
+    useState<Transaction | null>(null);
+  const [editTxn, setEditTxn] = useState<Transaction | null>(null);
 
   const { expenses, incomes, totalExpense, totalIncome, net } = useMemo(() => {
     const expenses = transactions.filter((txn) => txn.type === "expense");
@@ -85,9 +96,57 @@ export function SelectedDayView() {
     };
   }, [transactions]);
 
+  const INITIAL_CHUNK = 40;
+  const CHUNK_SIZE = 30;
+  const [expenseRenderCount, setExpenseRenderCount] =
+    useState(INITIAL_CHUNK);
+  const [incomeRenderCount, setIncomeRenderCount] = useState(INITIAL_CHUNK);
+
+  // Reset chunking when date or list size changes
+  useEffect(() => {
+    setExpenseRenderCount(Math.min(INITIAL_CHUNK, expenses.length));
+    setIncomeRenderCount(Math.min(INITIAL_CHUNK, incomes.length));
+  }, [selectedDate, expenses.length, incomes.length]);
+
+  // Progressive render to avoid blocking on very large lists
+  useEffect(() => {
+    if (expenseRenderCount >= expenses.length) return;
+    const id = window.setTimeout(() => {
+      setExpenseRenderCount((c) =>
+        Math.min(expenses.length, c + CHUNK_SIZE),
+      );
+    }, 16);
+    return () => clearTimeout(id);
+  }, [expenseRenderCount, expenses.length]);
+
+  useEffect(() => {
+    if (incomeRenderCount >= incomes.length) return;
+    const id = window.setTimeout(() => {
+      setIncomeRenderCount((c) =>
+        Math.min(incomes.length, c + CHUNK_SIZE),
+      );
+    }, 16);
+    return () => clearTimeout(id);
+  }, [incomeRenderCount, incomes.length]);
+
+  const visibleExpenses =
+    expenseRenderCount >= expenses.length
+      ? expenses
+      : expenses.slice(0, expenseRenderCount);
+  const visibleIncomes =
+    incomeRenderCount >= incomes.length
+      ? incomes
+      : incomes.slice(0, incomeRenderCount);
+
   // Stable id arrays for SortableContext — avoids recreation on every render
-  const expenseIds = useMemo(() => expenses.map((e) => e.id), [expenses]);
-  const incomeIds = useMemo(() => incomes.map((i) => i.id), [incomes]);
+  const expenseIds = useMemo(
+    () => visibleExpenses.map((e) => e.id),
+    [visibleExpenses],
+  );
+  const incomeIds = useMemo(
+    () => visibleIncomes.map((i) => i.id),
+    [visibleIncomes],
+  );
 
   const { setNodeRef, isOver: isOverZone } = useDroppable({
     id: `day-${selectedDate}`,
@@ -283,12 +342,13 @@ export function SelectedDayView() {
                   items={expenseIds}
                   strategy={verticalListSortingStrategy}>
                   <div className="space-y-1">
-                    {expenses.map((txn) => (
+                    {visibleExpenses.map((txn) => (
                       <TransactionItemFull
                         key={txn.id}
                         transaction={txn}
                         t={t}
-                        onDelete={handleDelete}
+                        onRequestEdit={setPendingEditTxn}
+                        onRequestDelete={setPendingDeleteTxn}
                         onSave={handleSave}
                       />
                     ))}
@@ -308,18 +368,26 @@ export function SelectedDayView() {
                   items={incomeIds}
                   strategy={verticalListSortingStrategy}>
                   <div className="space-y-1">
-                    {incomes.map((txn) => (
+                    {visibleIncomes.map((txn) => (
                       <TransactionItemFull
                         key={txn.id}
                         transaction={txn}
                         t={t}
-                        onDelete={handleDelete}
+                        onRequestEdit={setPendingEditTxn}
+                        onRequestDelete={setPendingDeleteTxn}
                         onSave={handleSave}
                       />
                     ))}
                   </div>
                 </SortableContext>
               </section>
+            )}
+
+            {(expenseRenderCount < expenses.length ||
+              incomeRenderCount < incomes.length) && (
+              <p className="text-[11px] text-slate-400 text-center pt-2">
+                {t.loadingMore ?? "Đang tải thêm..."}
+              </p>
             )}
           </div>
         )}
@@ -352,6 +420,59 @@ export function SelectedDayView() {
             </span>
           </div>
         </div>
+      )}
+
+      {/* Shared dialogs (single instance, not per row) */}
+      <ConfirmDialog
+        open={!!pendingEditTxn}
+        onOpenChange={(v) => {
+          if (!v) setPendingEditTxn(null);
+        }}
+        title={t.editTxnTitle}
+        description={
+          pendingEditTxn
+            ? `"${pendingEditTxn.title}" — ${formatVND(pendingEditTxn.amount)}`
+            : undefined
+        }
+        confirmLabel={t.editTxnConfirm}
+        onConfirm={() => {
+          if (pendingEditTxn) setEditTxn(pendingEditTxn);
+          setPendingEditTxn(null);
+        }}
+      />
+      <ConfirmDialog
+        open={!!pendingDeleteTxn}
+        onOpenChange={(v) => {
+          if (!v) setPendingDeleteTxn(null);
+        }}
+        title={t.deleteTxnTitle}
+        description={
+          pendingDeleteTxn
+            ? `"${pendingDeleteTxn.title}" — ${formatVND(
+                pendingDeleteTxn.amount,
+              )} ${t.deleteTxnSuffix}`
+            : undefined
+        }
+        confirmLabel={t.deleteTxnConfirm}
+        danger
+        onConfirm={() => {
+          if (pendingDeleteTxn) {
+            handleDelete({
+              id: pendingDeleteTxn.id,
+              date: pendingDeleteTxn.date,
+            });
+          }
+          setPendingDeleteTxn(null);
+        }}
+      />
+      {editTxn && (
+        <EditTransactionDialog
+          open={!!editTxn}
+          onOpenChange={(open) => {
+            if (!open) setEditTxn(null);
+          }}
+          transaction={editTxn}
+        />
       )}
     </div>
   );
@@ -420,20 +541,18 @@ type DashboardT = ReturnType<typeof useDashboardT>;
 interface TransactionItemFullProps {
   transaction: Transaction;
   t: DashboardT;
-  onDelete: (args: { id: string; date: string }) => void;
+  onRequestEdit: (txn: Transaction) => void;
+  onRequestDelete: (txn: Transaction) => void;
   onSave: (txn: Transaction) => void;
 }
 
 const TransactionItemFull = memo(function TransactionItemFull({
   transaction: txn,
   t,
-  onDelete,
+  onRequestEdit,
+  onRequestDelete,
   onSave,
 }: TransactionItemFullProps) {
-  const [editOpen, setEditOpen] = useState(false);
-  const [editConfirm, setEditConfirm] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
-
   const {
     attributes,
     listeners,
@@ -497,7 +616,7 @@ const TransactionItemFull = memo(function TransactionItemFull({
         {/* Inline action buttons */}
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           <button
-            onClick={() => setEditConfirm(true)}
+            onClick={() => onRequestEdit(txn)}
             className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 hover:text-indigo-500 transition-colors"
             title={t.btnTitleEdit}>
             <Pencil className="w-3.5 h-3.5" />
@@ -509,40 +628,13 @@ const TransactionItemFull = memo(function TransactionItemFull({
             <BookmarkPlus className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => setDeleteConfirm(true)}
+            onClick={() => onRequestDelete(txn)}
             className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
             title={t.btnTitleDelete}>
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
-
-      {/* Edit confirmation */}
-      <ConfirmDialog
-        open={editConfirm}
-        onOpenChange={setEditConfirm}
-        title={t.editTxnTitle}
-        description={`"${txn.title}" — ${formatVND(txn.amount)}`}
-        confirmLabel={t.editTxnConfirm}
-        onConfirm={() => setEditOpen(true)}
-      />
-
-      {/* Delete confirmation */}
-      <ConfirmDialog
-        open={deleteConfirm}
-        onOpenChange={setDeleteConfirm}
-        title={t.deleteTxnTitle}
-        description={`"${txn.title}" — ${formatVND(txn.amount)} ${t.deleteTxnSuffix}`}
-        confirmLabel={t.deleteTxnConfirm}
-        danger
-        onConfirm={() => onDelete({ id: txn.id, date: txn.date })}
-      />
-
-      <EditTransactionDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        transaction={txn}
-      />
     </>
   );
 });

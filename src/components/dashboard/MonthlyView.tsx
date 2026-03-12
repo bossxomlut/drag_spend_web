@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useMemo } from "react";
 import {
   format,
   startOfMonth,
@@ -48,26 +48,29 @@ export function MonthlyView() {
   const calEnd = endOfWeek(endOfMonth(firstOfMonth), { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: calStart, end: calEnd });
 
-  // Monthly aggregates
-  let monthIncome = 0;
-  let monthExpense = 0;
-  const activeDays: Record<string, { income: number; expense: number }> = {};
+  const { monthIncome, monthExpense, activeDays } = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    const daysMap: Record<string, { income: number; expense: number }> = {};
 
-  Object.entries(transactionsByDate).forEach(([date, txns]) => {
-    if (!date.startsWith(viewMonth)) return;
-    txns.forEach((t) => {
-      if (t.type === "income") monthIncome += t.amount;
-      else monthExpense += t.amount;
+    Object.entries(transactionsByDate).forEach(([date, txns]) => {
+      if (!date.startsWith(viewMonth)) return;
+      let dayIncome = 0;
+      let dayExpense = 0;
+      for (const t of txns) {
+        if (t.type === "income") {
+          dayIncome += t.amount;
+          income += t.amount;
+        } else {
+          dayExpense += t.amount;
+          expense += t.amount;
+        }
+      }
+      daysMap[date] = { income: dayIncome, expense: dayExpense };
     });
-    activeDays[date] = {
-      income: txns
-        .filter((t) => t.type === "income")
-        .reduce((s, t) => s + t.amount, 0),
-      expense: txns
-        .filter((t) => t.type === "expense")
-        .reduce((s, t) => s + t.amount, 0),
-    };
-  });
+
+    return { monthIncome: income, monthExpense: expense, activeDays: daysMap };
+  }, [transactionsByDate, viewMonth]);
 
   const monthNet = monthIncome - monthExpense;
 

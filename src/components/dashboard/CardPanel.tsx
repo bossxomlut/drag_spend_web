@@ -11,13 +11,17 @@ import { SpendingCardItem } from "./SpendingCardItem";
 import { CreateCardDialog } from "./CreateCardDialog";
 import { useDashboardT } from "@/hooks/useDashboardT";
 
+const EMPTY_IDS: string[] = [];
+
 export function CardPanel() {
   const locale = useLocale();
   const t = useDashboardT();
   const cards = useAppStore((s) => s.cards);
   const selectedDate = useAppStore((s) => s.selectedDate);
-  const hiddenCardsByDate = useAppStore((s) => s.hiddenCardsByDate);
-  const hiddenCardIds = new Set(hiddenCardsByDate[selectedDate] ?? []);
+  const hiddenIds = useAppStore(
+    (s) => s.hiddenCardsByDate[selectedDate] ?? EMPTY_IDS,
+  );
+  const hiddenCardIds = new Set(hiddenIds);
   const [search, setSearch] = useState("");
   const [openCreate, setOpenCreate] = useState(false);
 

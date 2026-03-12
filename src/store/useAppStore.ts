@@ -26,6 +26,7 @@ interface AppState {
   // ── Transactions (by date map) ─────────────────────────────
   transactionsByDate: Record<string, Transaction[]>; // key: YYYY-MM-DD
   setTransactionsForDate: (date: string, txns: Transaction[]) => void;
+  setTransactionsForDates: (map: Record<string, Transaction[]>) => void;
   addTransaction: (txn: Transaction) => void;
   updateTransaction: (txn: Transaction) => void;
   removeTransaction: (id: string, date: string) => void;
@@ -75,6 +76,10 @@ export const useAppStore = create<AppState>((set) => ({
   setTransactionsForDate: (date, txns) =>
     set((s) => ({
       transactionsByDate: { ...s.transactionsByDate, [date]: txns },
+    })),
+  setTransactionsForDates: (map) =>
+    set((s) => ({
+      transactionsByDate: { ...s.transactionsByDate, ...map },
     })),
   addTransaction: (txn) =>
     set((s) => {

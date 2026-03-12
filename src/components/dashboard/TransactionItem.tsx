@@ -117,11 +117,13 @@ export const TransactionItem = memo(function TransactionItem({
         </DropdownMenu>
       </div>
 
-      <EditTransactionDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        transaction={txn}
-      />
+      {editOpen && (
+        <EditTransactionDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          transaction={txn}
+        />
+      )}
     </>
   );
 });

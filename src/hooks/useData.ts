@@ -449,7 +449,9 @@ export function useDeleteTransaction() {
 
 // Fetch all transactions for a given month (YYYY-MM)
 export function useMonthlyTransactions(yearMonth: string) {
-  const setTransactionsForDate = useAppStore((s) => s.setTransactionsForDate);
+  const setTransactionsForDates = useAppStore(
+    (s) => s.setTransactionsForDates,
+  );
 
   return useQuery({
     queryKey: ["transactions-month", yearMonth],
@@ -473,9 +475,7 @@ export function useMonthlyTransactions(yearMonth: string) {
         if (!grouped[txn.date]) grouped[txn.date] = [];
         grouped[txn.date].push(txn);
       }
-      Object.entries(grouped).forEach(([date, txns]) =>
-        setTransactionsForDate(date, txns),
-      );
+      setTransactionsForDates(grouped);
 
       return data as Transaction[];
     },

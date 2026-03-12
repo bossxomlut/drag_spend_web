@@ -36,6 +36,7 @@ const T = {
     btnTitleEdit: "Chỉnh sửa",
     btnTitleSave: "Lưu thành thẻ mới",
     btnTitleDelete: "Xóa",
+    loadingMore: "Đang tải thêm...",
     // ReportView
     reportTitle: (m: number, y: number) => `Báo cáo ${m}/${y}`,
     noReportData: "Chưa có dữ liệu tháng này",
@@ -128,6 +129,7 @@ const T = {
     btnTitleEdit: "Edit",
     btnTitleSave: "Save as new card",
     btnTitleDelete: "Delete",
+    loadingMore: "Loading more...",
     reportTitle: (m: number, y: number) => `Report ${m}/${y}`,
     noReportData: "No data for this month",
     statAvgDaily: "Avg daily spend",

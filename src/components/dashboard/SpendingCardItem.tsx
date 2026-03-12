@@ -41,14 +41,15 @@ export function SpendingCardItem({ card }: Props) {
   const selectedDate = useAppStore((s) => s.selectedDate);
   const addTransaction = useAppStore((s) => s.addTransaction);
   const removeTransaction = useAppStore((s) => s.removeTransaction);
-  const transactionsByDate = useAppStore((s) => s.transactionsByDate);
+  const existingCount = useAppStore(
+    (s) => s.transactionsByDate[selectedDate]?.length ?? 0,
+  );
 
   function handleQuickAdd(e: React.MouseEvent) {
     e.stopPropagation();
     const defaultVariant =
       card.variants?.find((v) => v.is_default) ?? card.variants?.[0];
     const amount = defaultVariant?.amount ?? 0;
-    const existingCount = (transactionsByDate[selectedDate] ?? []).length;
     const tempId = `__opt__${Date.now()}`;
     const tempTxn = {
       id: tempId,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo, useCallback, memo } from "react";
 import { useDroppable, useDndMonitor } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -45,23 +45,49 @@ import { EditTransactionDialog } from "./EditTransactionDialog";
 import { useDashboardT } from "@/hooks/useDashboardT";
 import type { Transaction } from "@/types";
 
+const EMPTY: Transaction[] = [];
+
 export function SelectedDayView() {
   const locale = useLocale();
   const t = useDashboardT();
   const selectedDate = useAppStore((s) => s.selectedDate);
   const setSelectedDate = useAppStore((s) => s.setSelectedDate);
-  const transactionsByDate = useAppStore((s) => s.transactionsByDate);
+  // Granular selector: only re-renders when the selected date's transactions change
+  const transactions =
+    useAppStore((s) => s.transactionsByDate[s.selectedDate]) ?? EMPTY;
   const [, startTransition] = useTransition();
 
   useTransactions(selectedDate);
   const copyFromYesterday = useCopyFromYesterday();
+  // Lift mutations to parent — avoids creating 2 mutation instances per TransactionItemFull
+  const deleteTransaction = useDeleteTransaction();
+  const saveAsCard = useSaveTransactionAsCard();
+  const handleDelete = useCallback(
+    (args: { id: string; date: string }) => deleteTransaction.mutate(args),
+    [deleteTransaction],
+  );
+  const handleSave = useCallback(
+    (txn: Transaction) => saveAsCard.mutate(txn),
+    [saveAsCard],
+  );
 
-  const transactions = transactionsByDate[selectedDate] ?? [];
-  const expenses = transactions.filter((t) => t.type === "expense");
-  const incomes = transactions.filter((t) => t.type === "income");
-  const totalExpense = expenses.reduce((s, t) => s + t.amount, 0);
-  const totalIncome = incomes.reduce((s, t) => s + t.amount, 0);
-  const net = totalIncome - totalExpense;
+  const { expenses, incomes, totalExpense, totalIncome, net } = useMemo(() => {
+    const expenses = transactions.filter((txn) => txn.type === "expense");
+    const incomes = transactions.filter((txn) => txn.type === "income");
+    const totalExpense = expenses.reduce((s, txn) => s + txn.amount, 0);
+    const totalIncome = incomes.reduce((s, txn) => s + txn.amount, 0);
+    return {
+      expenses,
+      incomes,
+      totalExpense,
+      totalIncome,
+      net: totalIncome - totalExpense,
+    };
+  }, [transactions]);
+
+  // Stable id arrays for SortableContext — avoids recreation on every render
+  const expenseIds = useMemo(() => expenses.map((e) => e.id), [expenses]);
+  const incomeIds = useMemo(() => incomes.map((i) => i.id), [incomes]);
 
   const { setNodeRef, isOver: isOverZone } = useDroppable({
     id: `day-${selectedDate}`,
@@ -254,11 +280,17 @@ export function SelectedDayView() {
                   {t.expense}
                 </p>
                 <SortableContext
-                  items={expenses.map((t) => t.id)}
+                  items={expenseIds}
                   strategy={verticalListSortingStrategy}>
                   <div className="space-y-1">
                     {expenses.map((txn) => (
-                      <TransactionItemFull key={txn.id} transaction={txn} />
+                      <TransactionItemFull
+                        key={txn.id}
+                        transaction={txn}
+                        t={t}
+                        onDelete={handleDelete}
+                        onSave={handleSave}
+                      />
                     ))}
                   </div>
                 </SortableContext>
@@ -273,11 +305,17 @@ export function SelectedDayView() {
                   {t.income}
                 </p>
                 <SortableContext
-                  items={incomes.map((t) => t.id)}
+                  items={incomeIds}
                   strategy={verticalListSortingStrategy}>
                   <div className="space-y-1">
                     {incomes.map((txn) => (
-                      <TransactionItemFull key={txn.id} transaction={txn} />
+                      <TransactionItemFull
+                        key={txn.id}
+                        transaction={txn}
+                        t={t}
+                        onDelete={handleDelete}
+                        onSave={handleSave}
+                      />
                     ))}
                   </div>
                 </SortableContext>
@@ -377,17 +415,24 @@ function ConfirmDialog({
 }
 
 // ─── Transaction Row ───────────────────────────────────────────────────────────
-function TransactionItemFull({
-  transaction: txn,
-}: {
+type DashboardT = ReturnType<typeof useDashboardT>;
+
+interface TransactionItemFullProps {
   transaction: Transaction;
-}) {
+  t: DashboardT;
+  onDelete: (args: { id: string; date: string }) => void;
+  onSave: (txn: Transaction) => void;
+}
+
+const TransactionItemFull = memo(function TransactionItemFull({
+  transaction: txn,
+  t,
+  onDelete,
+  onSave,
+}: TransactionItemFullProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [editConfirm, setEditConfirm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const deleteTransaction = useDeleteTransaction();
-  const saveAsCard = useSaveTransactionAsCard();
-  const t = useDashboardT();
 
   const {
     attributes,
@@ -458,7 +503,7 @@ function TransactionItemFull({
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => saveAsCard.mutate(txn)}
+            onClick={() => onSave(txn)}
             className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 hover:text-amber-500 transition-colors"
             title={t.btnTitleSave}>
             <BookmarkPlus className="w-3.5 h-3.5" />
@@ -490,9 +535,7 @@ function TransactionItemFull({
         description={`"${txn.title}" — ${formatVND(txn.amount)} ${t.deleteTxnSuffix}`}
         confirmLabel={t.deleteTxnConfirm}
         danger
-        onConfirm={() =>
-          deleteTransaction.mutate({ id: txn.id, date: txn.date })
-        }
+        onConfirm={() => onDelete({ id: txn.id, date: txn.date })}
       />
 
       <EditTransactionDialog
@@ -502,4 +545,4 @@ function TransactionItemFull({
       />
     </>
   );
-}
+});

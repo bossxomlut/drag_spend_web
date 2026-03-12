@@ -335,6 +335,7 @@ export function useTransactions(date: string) {
       return txns;
     },
     enabled: !!date,
+    staleTime: 60_000, // avoid refetch when switching back to an already-loaded date
   });
 }
 

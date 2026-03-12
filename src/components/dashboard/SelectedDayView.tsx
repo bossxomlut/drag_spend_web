@@ -7,6 +7,7 @@ import {
   useCallback,
   memo,
   useEffect,
+  useRef,
 } from "react";
 import { useDroppable, useDndMonitor } from "@dnd-kit/core";
 import {
@@ -101,12 +102,35 @@ export function SelectedDayView() {
   const [expenseRenderCount, setExpenseRenderCount] =
     useState(INITIAL_CHUNK);
   const [incomeRenderCount, setIncomeRenderCount] = useState(INITIAL_CHUNK);
+  const prevExpenseLen = useRef(0);
+  const prevIncomeLen = useRef(0);
 
   // Reset chunking when date or list size changes
   useEffect(() => {
     setExpenseRenderCount(Math.min(INITIAL_CHUNK, expenses.length));
     setIncomeRenderCount(Math.min(INITIAL_CHUNK, incomes.length));
-  }, [selectedDate, expenses.length, incomes.length]);
+    prevExpenseLen.current = expenses.length;
+    prevIncomeLen.current = incomes.length;
+  }, [selectedDate]);
+
+  // Clamp (or auto-expand) render count when list length changes
+  useEffect(() => {
+    setExpenseRenderCount((c) => {
+      const prevLen = prevExpenseLen.current;
+      prevExpenseLen.current = expenses.length;
+      if (c >= prevLen) return expenses.length; // keep fully-rendered state
+      return Math.min(c, expenses.length);
+    });
+  }, [expenses.length]);
+
+  useEffect(() => {
+    setIncomeRenderCount((c) => {
+      const prevLen = prevIncomeLen.current;
+      prevIncomeLen.current = incomes.length;
+      if (c >= prevLen) return incomes.length; // keep fully-rendered state
+      return Math.min(c, incomes.length);
+    });
+  }, [incomes.length]);
 
   // Progressive render to avoid blocking on very large lists
   useEffect(() => {

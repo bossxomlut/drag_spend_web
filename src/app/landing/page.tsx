@@ -198,6 +198,18 @@ export default function LandingPage() {
         <p>
           © {new Date().getFullYear()} · {t.footerTagline}
         </p>
+        <div className="flex items-center justify-center gap-4 mt-2">
+          <Link
+            href="/privacy"
+            className="hover:text-indigo-600 transition-colors underline underline-offset-2">
+            {t.footerPrivacy}
+          </Link>
+          <Link
+            href="/terms"
+            className="hover:text-indigo-600 transition-colors underline underline-offset-2">
+            {t.footerTerms}
+          </Link>
+        </div>
       </footer>
     </div>
   );
@@ -457,6 +469,8 @@ const TRANSLATIONS = {
     ctaSubtitle: "Miễn phí, không cần thẻ tín dụng. Đăng ký dưới 30 giây.",
     ctaBtn: "Tạo tài khoản miễn phí",
     footerTagline: "Quản lý chi tiêu thông minh",
+    footerPrivacy: "Chính sách bảo mật",
+    footerTerms: "Điều khoản sử dụng",
   },
   en: {
     badge: "Completely free · No setup needed",
@@ -477,6 +491,8 @@ const TRANSLATIONS = {
     ctaSubtitle: "Free, no credit card required. Sign up in under 30 seconds.",
     ctaBtn: "Create free account",
     footerTagline: "Smart expense tracking",
+    footerPrivacy: "Privacy Policy",
+    footerTerms: "Terms of Service",
   },
 };
 

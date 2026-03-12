@@ -29,10 +29,18 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const PUBLIC_PATHS = ["/", "/api/health"];
+  const PUBLIC_PATHS = [
+    "/",
+    "/api/health",
+    "/landing",
+    "/privacy",
+    "/terms",
+    "/account/deleted",
+  ];
 
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isOnboarding = request.nextUrl.pathname.startsWith("/onboarding");
+  const isAccountDeleted = request.nextUrl.pathname === "/account/deleted";
   const isPublic =
     isAuthPage || PUBLIC_PATHS.includes(request.nextUrl.pathname);
 
@@ -48,11 +56,19 @@ export async function updateSession(request: NextRequest) {
   if (user && !isOnboarding && !isAuthPage) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("language")
+      .select("language, deleted_at")
       .eq("id", user.id)
       .single();
 
-    if (profile && profile.language === null) {
+    // Soft-deleted: redirect to account/deleted page (unless already there)
+    if (profile?.deleted_at && !isAccountDeleted) {
+      await supabase.auth.signOut();
+      const url = new URL("/account/deleted", request.url);
+      url.searchParams.set("since", profile.deleted_at);
+      return NextResponse.redirect(url);
+    }
+
+    if (profile && profile.language === null && !isAccountDeleted) {
       return NextResponse.redirect(
         new URL("/onboarding/language", request.url),
       );

@@ -99,6 +99,13 @@ const T = {
     deleteBtn: "Xóa",
     // DashboardHeader
     logout: "Đăng xuất",
+    deleteAccount: "Xoá tài khoản",
+    deleteAccountTitle: "Xoá tài khoản?",
+    deleteAccountDesc:
+      "Tài khoản của bạn sẽ bị đánh dấu chờ xoá. Toàn bộ dữ liệu sẽ bị xoá vĩnh viễn sau 30 ngày.\n\nNếu bạn thay đổi ý định, hãy liên hệ bossxomlut@gmail.com trong vòng 30 ngày để khôi phục.",
+    deleteAccountConfirm: "Xoá tài khoản của tôi",
+    deleteAccountCancel: "Huỷ",
+    deleteAccountError: "Không thể xoá tài khoản. Thử lại sau.",
   },
   en: {
     tabCards: "Cards",
@@ -186,6 +193,13 @@ const T = {
     deleteCardSuffix: "will be permanently deleted.",
     deleteBtn: "Delete",
     logout: "Sign out",
+    deleteAccount: "Delete account",
+    deleteAccountTitle: "Delete account?",
+    deleteAccountDesc:
+      "Your account will be marked for deletion. All data will be permanently deleted after 30 days.\n\nIf you change your mind, contact bossxomlut@gmail.com within 30 days to restore your account.",
+    deleteAccountConfirm: "Delete my account",
+    deleteAccountCancel: "Cancel",
+    deleteAccountError: "Could not delete account. Please try again.",
   },
 };
 

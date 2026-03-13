@@ -24,8 +24,9 @@ import {
   useDeleteTransaction,
   useSaveTransactionAsCard,
   useCopyFromYesterday,
+  useUpdateTransaction,
 } from "@/hooks/useData";
-import { formatVND, formatCompact } from "@/lib/currency";
+import { formatVND, formatCompact, parseCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -48,10 +49,15 @@ import {
   GripVertical,
   Copy,
   Loader2,
+  LayoutList,
+  Table2,
+  Save,
 } from "lucide-react";
 import { EditTransactionDialog } from "./EditTransactionDialog";
+import { TransactionTableView, type DraftEdit } from "./TransactionTableView";
 import { useDashboardT } from "@/hooks/useDashboardT";
-import type { Transaction } from "@/types";
+import { toast } from "sonner";
+import type { Transaction, TransactionType } from "@/types";
 
 const EMPTY: Transaction[] = [];
 
@@ -60,6 +66,7 @@ export function SelectedDayView() {
   const t = useDashboardT();
   const selectedDate = useAppStore((s) => s.selectedDate);
   const setSelectedDate = useAppStore((s) => s.setSelectedDate);
+  const categories = useAppStore((s) => s.categories);
   // Granular selector: only re-renders when the selected date's transactions change
   const transactions =
     useAppStore((s) => s.transactionsByDate[s.selectedDate]) ?? EMPTY;
@@ -70,6 +77,7 @@ export function SelectedDayView() {
   // Lift mutations to parent — avoids creating 2 mutation instances per TransactionItemFull
   const deleteTransaction = useDeleteTransaction();
   const saveAsCard = useSaveTransactionAsCard();
+  const updateTransaction = useUpdateTransaction();
   const handleDelete = useCallback(
     (args: { id: string; date: string }) => deleteTransaction.mutate(args),
     [deleteTransaction],
@@ -78,10 +86,102 @@ export function SelectedDayView() {
     (txn: Transaction) => saveAsCard.mutate(txn),
     [saveAsCard],
   );
-  const [pendingEditTxn, setPendingEditTxn] = useState<Transaction | null>(null);
-  const [pendingDeleteTxn, setPendingDeleteTxn] =
-    useState<Transaction | null>(null);
+  const [pendingEditTxn, setPendingEditTxn] = useState<Transaction | null>(
+    null,
+  );
+  const [pendingDeleteTxn, setPendingDeleteTxn] = useState<Transaction | null>(
+    null,
+  );
   const [editTxn, setEditTxn] = useState<Transaction | null>(null);
+
+  // ── Table view mode ──────────────────────────────────────────
+  type ViewMode = "list" | "table";
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [draftEdits, setDraftEdits] = useState<Record<string, DraftEdit>>({});
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasTableErrors, setHasTableErrors] = useState(false);
+
+  const isDirty = Object.keys(draftEdits).length > 0;
+
+  // Clear drafts when navigating to another day
+  useEffect(() => {
+    setDraftEdits({});
+  }, [selectedDate]);
+
+  const handleDraftEdit = useCallback(
+    (
+      id: string,
+      field: keyof DraftEdit,
+      value: string | TransactionType | null,
+    ) => {
+      setDraftEdits((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], [field]: value },
+      }));
+    },
+    [],
+  );
+
+  // Table mode delete — routes through the same confirm dialog as list mode
+  const handleTableDelete = useCallback(
+    ({ id }: { id: string; date: string }) => {
+      const txn = transactions.find((tr) => tr.id === id);
+      if (txn) setPendingDeleteTxn(txn);
+    },
+    [transactions],
+  );
+
+  function requestSwitchToList() {
+    if (isDirty) {
+      setShowUnsavedDialog(true);
+    } else {
+      setViewMode("list");
+    }
+  }
+
+  async function handleSaveChanges() {
+    // Hard validation before sending — catches any case reactive UI missed
+    for (const [id, draft] of Object.entries(draftEdits)) {
+      const txn = transactions.find((tr) => tr.id === id)!;
+      const effectiveTitle =
+        draft.title !== undefined ? draft.title : txn.title;
+      if (!effectiveTitle.trim()) {
+        toast.error(t.titleRequired);
+        return;
+      }
+      if (
+        draft.amount !== undefined &&
+        !/^\d+(\.\d+)?(k|m)?$/i.test(draft.amount.trim())
+      ) {
+        toast.error(t.amountInvalidFormat);
+        return;
+      }
+    }
+
+    setIsSaving(true);
+    try {
+      const updates = Object.entries(draftEdits).map(([id, draft]) => {
+        const txn = transactions.find((tr) => tr.id === id)!;
+        const amount =
+          draft.amount !== undefined ? parseCompact(draft.amount) : txn.amount;
+        return updateTransaction.mutateAsync({
+          id,
+          date: txn.date,
+          ...(draft.title !== undefined && { title: draft.title }),
+          amount,
+          ...(draft.type !== undefined && { type: draft.type }),
+          ...(draft.category_id !== undefined && {
+            category_id: draft.category_id,
+          }),
+        });
+      });
+      await Promise.all(updates);
+      setDraftEdits({});
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   const { expenses, incomes, totalExpense, totalIncome, net } = useMemo(() => {
     const expenses = transactions.filter((txn) => txn.type === "expense");
@@ -99,8 +199,7 @@ export function SelectedDayView() {
 
   const INITIAL_CHUNK = 40;
   const CHUNK_SIZE = 30;
-  const [expenseRenderCount, setExpenseRenderCount] =
-    useState(INITIAL_CHUNK);
+  const [expenseRenderCount, setExpenseRenderCount] = useState(INITIAL_CHUNK);
   const [incomeRenderCount, setIncomeRenderCount] = useState(INITIAL_CHUNK);
   const prevExpenseLen = useRef(0);
   const prevIncomeLen = useRef(0);
@@ -136,9 +235,7 @@ export function SelectedDayView() {
   useEffect(() => {
     if (expenseRenderCount >= expenses.length) return;
     const id = window.setTimeout(() => {
-      setExpenseRenderCount((c) =>
-        Math.min(expenses.length, c + CHUNK_SIZE),
-      );
+      setExpenseRenderCount((c) => Math.min(expenses.length, c + CHUNK_SIZE));
     }, 16);
     return () => clearTimeout(id);
   }, [expenseRenderCount, expenses.length]);
@@ -146,9 +243,7 @@ export function SelectedDayView() {
   useEffect(() => {
     if (incomeRenderCount >= incomes.length) return;
     const id = window.setTimeout(() => {
-      setIncomeRenderCount((c) =>
-        Math.min(incomes.length, c + CHUNK_SIZE),
-      );
+      setIncomeRenderCount((c) => Math.min(incomes.length, c + CHUNK_SIZE));
     }, 16);
     return () => clearTimeout(id);
   }, [incomeRenderCount, incomes.length]);
@@ -253,16 +348,52 @@ export function SelectedDayView() {
             </Button>
           </div>
 
-          {!todayFlag && (
+          <div className="flex items-center gap-2">
+            {!todayFlag && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5"
+                onClick={goToday}>
+                <CalendarDays className="w-3.5 h-3.5" />
+                {t.today}
+              </Button>
+            )}
+
+            {/* View mode toggle */}
             <Button
               variant="outline"
               size="sm"
-              className="h-8 text-xs gap-1.5"
-              onClick={goToday}>
-              <CalendarDays className="w-3.5 h-3.5" />
-              {t.today}
+              className="h-8 w-8 p-0"
+              title={viewMode === "list" ? t.switchToTable : t.switchToList}
+              onClick={() =>
+                viewMode === "list"
+                  ? setViewMode("table")
+                  : requestSwitchToList()
+              }>
+              {viewMode === "list" ? (
+                <Table2 className="w-4 h-4" />
+              ) : (
+                <LayoutList className="w-4 h-4" />
+              )}
             </Button>
-          )}
+
+            {/* Save changes button — only in table mode with edits */}
+            {viewMode === "table" && isDirty && (
+              <Button
+                size="sm"
+                className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white"
+                disabled={isSaving || hasTableErrors}
+                onClick={handleSaveChanges}>
+                {isSaving ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Save className="w-3.5 h-3.5" />
+                )}
+                {isSaving ? t.savingChanges : t.saveChangesBtn}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Day summary chips */}
@@ -314,10 +445,28 @@ export function SelectedDayView() {
         ref={setNodeRef}
         className={cn(
           "flex-1 overflow-y-auto transition-colors duration-150",
-          isOver ? "bg-indigo-50/70" : "bg-white",
+          isOver
+            ? "bg-indigo-50/70 dark:bg-indigo-950/20"
+            : "bg-white dark:bg-slate-900",
         )}>
-        {/* Sections: Expense + Income */}
-        {transactions.length === 0 ? (
+        {/* Table mode */}
+        {viewMode === "table" ? (
+          <div className="p-4">
+            <TransactionTableView
+              transactions={transactions}
+              categories={categories}
+              drafts={draftEdits}
+              onEdit={handleDraftEdit}
+              onDelete={handleTableDelete}
+              onValidationChange={setHasTableErrors}
+            />
+            {transactions.length === 0 && (
+              <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-8">
+                {t.dropEmpty}
+              </p>
+            )}
+          </div>
+        ) : transactions.length === 0 ? (
           <div
             className={cn(
               "h-full flex flex-col items-center justify-center gap-3 transition-all",
@@ -409,7 +558,7 @@ export function SelectedDayView() {
 
             {(expenseRenderCount < expenses.length ||
               incomeRenderCount < incomes.length) && (
-              <p className="text-[11px] text-slate-400 text-center pt-2">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center pt-2">
                 {t.loadingMore ?? "Đang tải thêm..."}
               </p>
             )}
@@ -498,6 +647,22 @@ export function SelectedDayView() {
           transaction={editTxn}
         />
       )}
+
+      {/* Unsaved changes guard */}
+      <ConfirmDialog
+        open={showUnsavedDialog}
+        onOpenChange={(v) => {
+          if (!v) setShowUnsavedDialog(false);
+        }}
+        title={t.unsavedTitle}
+        description={t.unsavedDesc}
+        confirmLabel={t.discardChanges}
+        onConfirm={() => {
+          setDraftEdits({});
+          setViewMode("list");
+          setShowUnsavedDialog(false);
+        }}
+      />
     </div>
   );
 }

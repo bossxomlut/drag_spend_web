@@ -29,7 +29,58 @@ import { LayoutGrid, CalendarDays, Calendar, BarChart2 } from "lucide-react";
 import type { DragItem } from "@/types";
 import { useDashboardT } from "@/hooks/useDashboardT";
 
+// ─── View registry ─────────────────────────────────────────────────────────────
+// To add a new panel: add one entry here. Key = tab id, desktop controls visibility.
+
 type MobileTab = "cards" | "day" | "month" | "report";
+
+interface ViewConfig {
+  tab: MobileTab;
+  icon: React.ReactNode;
+  labelKey: "tabCards" | "tabDay" | "tabMonth" | "tabReport";
+  /** Tailwind classes for the desktop (lg+) column */
+  desktopClass: string;
+  component: React.ReactNode;
+}
+
+const VIEWS = (components: {
+  cards: React.ReactNode;
+  day: React.ReactNode;
+  month: React.ReactNode;
+  report: React.ReactNode;
+}): ViewConfig[] => [
+  {
+    tab: "cards",
+    icon: <LayoutGrid className="w-5 h-5" />,
+    labelKey: "tabCards",
+    desktopClass:
+      "border-r border-slate-200 bg-white overflow-y-auto flex-shrink-0 lg:w-86 lg:flex lg:flex-col",
+    component: components.cards,
+  },
+  {
+    tab: "day",
+    icon: <CalendarDays className="w-5 h-5" />,
+    labelKey: "tabDay",
+    desktopClass:
+      "border-r border-slate-200 bg-white flex flex-col overflow-hidden flex-shrink-0 lg:w-72 lg:flex",
+    component: components.day,
+  },
+  {
+    tab: "month",
+    icon: <Calendar className="w-5 h-5" />,
+    labelKey: "tabMonth",
+    desktopClass:
+      "border-r border-slate-200 bg-white overflow-y-auto lg:flex lg:flex-col lg:flex-1 xl:flex-none xl:w-64 xl:flex-shrink-0",
+    component: components.month,
+  },
+  {
+    tab: "report",
+    icon: <BarChart2 className="w-5 h-5" />,
+    labelKey: "tabReport",
+    desktopClass: "bg-white overflow-y-auto xl:flex xl:flex-col xl:flex-1",
+    component: components.report,
+  },
+];
 
 export function DashboardClient() {
   useProfile();
@@ -46,6 +97,13 @@ export function DashboardClient() {
   const t = useDashboardT();
   const [activeDragItem, setActiveDragItem] = useState<DragItem | null>(null);
   const [mobileTab, setMobileTab] = useState<MobileTab>("day");
+
+  const views = VIEWS({
+    cards: <CardPanel />,
+    day: <SelectedDayView />,
+    month: <MonthlyView />,
+    report: <ReportView />,
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -146,73 +204,22 @@ export function DashboardClient() {
 
         {/* ── Main content area ───────────────────────────────── */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Column 1: Card Panel — lg+: w-52, mobile tab */}
-          <aside
-            className={cn(
-              "border-r border-slate-200 bg-white overflow-y-auto flex-shrink-0",
-              "lg:w-86 lg:flex lg:flex-col",
-              mobileTab === "cards" ? "flex flex-col flex-1" : "hidden",
-            )}>
-            <CardPanel />
-          </aside>
-
-          {/* Column 2: Selected Day — lg+: w-72, mobile tab */}
-          <main
-            className={cn(
-              "border-r border-slate-200 bg-white flex flex-col overflow-hidden flex-shrink-0",
-              "lg:w-72 lg:flex",
-              mobileTab === "day" ? "flex flex-1" : "hidden",
-            )}>
-            <SelectedDayView />
-          </main>
-
-          {/* Column 3: Monthly — lg+: flex-1 on lg, w-64 on xl; mobile tab */}
-          <aside
-            className={cn(
-              "border-r border-slate-200 bg-white overflow-y-auto",
-              "lg:flex lg:flex-col lg:flex-1 xl:flex-none xl:w-64 xl:flex-shrink-0",
-              mobileTab === "month" ? "flex flex-col flex-1" : "hidden",
-            )}>
-            <MonthlyView />
-          </aside>
-
-          {/* Column 4: Report — xl+: flex-1; mobile tab */}
-          <aside
-            className={cn(
-              "bg-white overflow-y-auto",
-              "xl:flex xl:flex-col xl:flex-1",
-              mobileTab === "report" ? "flex flex-col flex-1" : "hidden",
-            )}>
-            <ReportView />
-          </aside>
+          {views.map(({ tab, desktopClass, component }) => (
+            <div
+              key={tab}
+              className={cn(
+                desktopClass,
+                // Mobile: show only the active tab as full-width flex
+                mobileTab === tab ? "flex flex-col flex-1" : "hidden lg:flex",
+              )}>
+              {component}
+            </div>
+          ))}
         </div>
 
         {/* ── Mobile bottom tab bar (hidden on lg+) ──────────── */}
         <nav className="lg:hidden flex-shrink-0 border-t border-slate-200 bg-white flex items-center justify-around h-14 z-50">
-          {(
-            [
-              {
-                tab: "cards",
-                icon: <LayoutGrid className="w-5 h-5" />,
-                label: t.tabCards,
-              },
-              {
-                tab: "day",
-                icon: <CalendarDays className="w-5 h-5" />,
-                label: t.tabDay,
-              },
-              {
-                tab: "month",
-                icon: <Calendar className="w-5 h-5" />,
-                label: t.tabMonth,
-              },
-              {
-                tab: "report",
-                icon: <BarChart2 className="w-5 h-5" />,
-                label: t.tabReport,
-              },
-            ] as { tab: MobileTab; icon: React.ReactNode; label: string }[]
-          ).map(({ tab, icon, label }) => (
+          {views.map(({ tab, icon, labelKey }) => (
             <button
               key={tab}
               onClick={() => setMobileTab(tab)}
@@ -223,7 +230,7 @@ export function DashboardClient() {
                   : "text-slate-400 hover:text-slate-600",
               )}>
               {icon}
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="text-[10px] font-medium">{t[labelKey]}</span>
             </button>
           ))}
         </nav>

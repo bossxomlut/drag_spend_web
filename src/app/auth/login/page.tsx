@@ -47,7 +47,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -55,8 +55,22 @@ export default function LoginPage() {
     if (error) {
       toast.error(error.message);
     } else {
-      router.push("/dashboard");
-      router.refresh();
+      // Check soft-deletion before navigating (avoids an extra middleware hop)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("deleted_at")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profile?.deleted_at) {
+        await supabase.auth.signOut();
+        router.push(
+          `/account/deleted?since=${encodeURIComponent(profile.deleted_at)}`,
+        );
+      } else {
+        router.push("/dashboard");
+        router.refresh();
+      }
     }
   }
 

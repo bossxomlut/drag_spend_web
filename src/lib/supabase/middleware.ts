@@ -48,31 +48,38 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  if (user && isAuthPage) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  // Redirect to language selection if user hasn't picked a language yet
-  if (user && !isOnboarding && !isAuthPage) {
+  // For all authenticated users: check soft-deletion and language setup
+  if (user && !isOnboarding && !isAccountDeleted) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("language, deleted_at")
       .eq("id", user.id)
       .single();
 
-    // Soft-deleted: redirect to account/deleted page (unless already there)
-    if (profile?.deleted_at && !isAccountDeleted) {
+    // Soft-deleted: sign out and redirect to /account/deleted (anywhere → deleted)
+    if (profile?.deleted_at) {
       await supabase.auth.signOut();
       const url = new URL("/account/deleted", request.url);
       url.searchParams.set("since", profile.deleted_at);
       return NextResponse.redirect(url);
     }
 
-    if (profile && profile.language === null && !isAccountDeleted) {
+    // Redirect authenticated users away from auth pages
+    if (isAuthPage) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    // Redirect to language selection if not set
+    if (profile && profile.language === null) {
       return NextResponse.redirect(
         new URL("/onboarding/language", request.url),
       );
     }
+  }
+
+  // Unauthenticated user on auth page: allow through
+  if (!user && isAuthPage) {
+    return supabaseResponse;
   }
 
   return supabaseResponse;

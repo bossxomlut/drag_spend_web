@@ -61,28 +61,30 @@ function AccountDeletedContent() {
   const purge = since ? formatPurgeDate(since, lang) : null;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6 py-16">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center px-6 py-16">
       {/* Logo */}
       <div className="flex items-center gap-2 mb-10">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md">
           <TrendingDown className="w-5 h-5 text-white" />
         </div>
-        <span className="font-bold text-xl text-slate-800">Drag Spend</span>
+        <span className="font-bold text-xl text-slate-800 dark:text-slate-100">
+          Drag Spend
+        </span>
       </div>
 
-      <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-lg p-8 text-center">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg p-8 text-center">
         {/* Icon */}
-        <div className="w-16 h-16 mx-auto rounded-full bg-orange-50 border-2 border-orange-200 flex items-center justify-center mb-5">
+        <div className="w-16 h-16 mx-auto rounded-full bg-orange-50 dark:bg-orange-950 border-2 border-orange-200 dark:border-orange-800 flex items-center justify-center mb-5">
           <Clock className="w-8 h-8 text-orange-500" />
         </div>
 
-        <h1 className="text-xl font-extrabold text-slate-900 mb-2">
+        <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 mb-2">
           {t.title}
         </h1>
 
         {purge ? (
           <>
-            <p className="text-sm text-slate-500 leading-relaxed mb-3">
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
               {t.subtitle}
             </p>
             {/* Purge date card */}
@@ -99,7 +101,7 @@ function AccountDeletedContent() {
             </div>
           </>
         ) : (
-          <p className="text-sm text-slate-500 leading-relaxed mb-8">
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-8">
             {t.subtitleNoDate}
           </p>
         )}
@@ -129,13 +131,13 @@ function AccountDeletedContent() {
         </div>
 
         {/* Note */}
-        <p className="text-xs text-slate-400 leading-relaxed mb-6 px-2">
+        <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed mb-6 px-2">
           {t.note}
         </p>
 
         <Link
           href="/auth/login"
-          className="inline-flex items-center justify-center w-full gap-2 bg-slate-900 hover:bg-slate-700 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm">
+          className="inline-flex items-center justify-center w-full gap-2 bg-slate-900 hover:bg-slate-700 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-white font-semibold px-5 py-3 rounded-xl transition-colors text-sm">
           {t.backToLogin}
         </Link>
       </div>

@@ -388,7 +388,8 @@ export function useCreateTransaction() {
     },
     onSuccess: (txn) => {
       // NOTE: store update is handled optimistically in DashboardClient
-      // Just invalidate so re-fetch confirms real data
+      // Just invalidate so re-fetch confirms real data.
+      // report-month is derived from transactions-month — one invalidation covers both.
       qc.invalidateQueries({ queryKey: ["transactions", txn.date] });
       qc.invalidateQueries({
         queryKey: ["transactions-month", txn.date.slice(0, 7)],
@@ -419,6 +420,9 @@ export function useUpdateTransaction() {
     onSuccess: (txn) => {
       updateTransaction(txn);
       qc.invalidateQueries({ queryKey: ["transactions", txn.date] });
+      qc.invalidateQueries({
+        queryKey: ["transactions-month", txn.date.slice(0, 7)],
+      });
       toast.success("Đã cập nhật");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -441,43 +445,50 @@ export function useDeleteTransaction() {
     onSuccess: ({ id, date }) => {
       removeTransaction(id, date);
       qc.invalidateQueries({ queryKey: ["transactions", date] });
+      qc.invalidateQueries({
+        queryKey: ["transactions-month", date.slice(0, 7)],
+      });
       toast.success("Đã xóa");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 }
 
+// ─── Shared fetch for monthly transactions ──────────────────
+
+async function fetchMonthlyTransactions(
+  yearMonth: string,
+): Promise<Transaction[]> {
+  const [year, month] = yearMonth.split("-");
+  const from = `${year}-${month}-01`;
+  const lastDay = new Date(Number(year), Number(month), 0).getDate();
+  const to = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*, category:categories(*)")
+    .gte("date", from)
+    .lte("date", to)
+    .order("position");
+  if (error) throw error;
+  return data as Transaction[];
+}
+
 // Fetch all transactions for a given month (YYYY-MM)
 export function useMonthlyTransactions(yearMonth: string) {
-  const setTransactionsForDates = useAppStore(
-    (s) => s.setTransactionsForDates,
-  );
+  const setTransactionsForDates = useAppStore((s) => s.setTransactionsForDates);
 
   return useQuery({
     queryKey: ["transactions-month", yearMonth],
     queryFn: async () => {
-      const [year, month] = yearMonth.split("-");
-      const from = `${year}-${month}-01`;
-      const lastDay = new Date(Number(year), Number(month), 0).getDate();
-      const to = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
-
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("*, category:categories(*)")
-        .gte("date", from)
-        .lte("date", to)
-        .order("position");
-      if (error) throw error;
-
+      const data = await fetchMonthlyTransactions(yearMonth);
       // Populate store by date
       const grouped: Record<string, Transaction[]> = {};
-      for (const txn of data as Transaction[]) {
+      for (const txn of data) {
         if (!grouped[txn.date]) grouped[txn.date] = [];
         grouped[txn.date].push(txn);
       }
       setTransactionsForDates(grouped);
-
-      return data as Transaction[];
+      return data;
     },
     enabled: !!yearMonth,
     staleTime:
@@ -496,17 +507,48 @@ type MonthlyReportRow = {
   tx_count: number;
 };
 
-// Aggregated report — DB groups by date+category, client only renders
-export function useMonthlyReport(yearMonth: string) {
-  return useQuery({
-    queryKey: ["report-month", yearMonth],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_monthly_report", {
-        p_year_month: yearMonth,
+// Aggregated report — derived client-side from transactions-month cache
+// Shares the same cache key as useMonthlyTransactions — zero extra network request.
+function deriveMonthlyReport(txns: Transaction[]): MonthlyReportRow[] {
+  const map = new Map<string, MonthlyReportRow>();
+  for (const txn of txns) {
+    const key = `${txn.date}|${txn.category_id ?? ""}|${txn.type}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.total += txn.amount;
+      existing.tx_count += 1;
+    } else {
+      map.set(key, {
+        date: txn.date,
+        category_id: txn.category_id,
+        category_name: txn.category?.name ?? null,
+        category_icon: txn.category?.icon ?? null,
+        category_color: txn.category?.color ?? null,
+        type: txn.type,
+        total: txn.amount,
+        tx_count: 1,
       });
-      if (error) throw error;
-      return data as MonthlyReportRow[];
+    }
+  }
+  return Array.from(map.values());
+}
+
+export function useMonthlyReport(yearMonth: string) {
+  const setTransactionsForDates = useAppStore((s) => s.setTransactionsForDates);
+  return useQuery({
+    queryKey: ["transactions-month", yearMonth],
+    // Identical queryFn to useMonthlyTransactions so either hook can initiate the fetch safely
+    queryFn: async () => {
+      const data = await fetchMonthlyTransactions(yearMonth);
+      const grouped: Record<string, Transaction[]> = {};
+      for (const txn of data) {
+        if (!grouped[txn.date]) grouped[txn.date] = [];
+        grouped[txn.date].push(txn);
+      }
+      setTransactionsForDates(grouped);
+      return data;
     },
+    select: deriveMonthlyReport,
     enabled: !!yearMonth,
     staleTime:
       yearMonth < format(new Date(), "yyyy-MM") ? Infinity : 1000 * 60 * 5,

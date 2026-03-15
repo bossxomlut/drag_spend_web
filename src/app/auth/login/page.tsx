@@ -23,6 +23,7 @@ const T = {
     submitting: "Đang đăng nhập...",
     noAccount: "Chưa có tài khoản?",
     register: "Đăng ký",
+    forgotPassword: "Quên mật khẩu?",
   },
   en: {
     subtitle: "Smart expense tracking",
@@ -32,6 +33,7 @@ const T = {
     submitting: "Signing in...",
     noAccount: "Don't have an account?",
     register: "Register",
+    forgotPassword: "Forgot password?",
   },
 };
 
@@ -91,8 +93,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-xl font-semibold text-slate-800 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-8">
+          <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-6">
             {t.heading}
           </h1>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -122,11 +124,18 @@ export default function LoginPage() {
               {loading ? t.submitting : t.submit}
             </Button>
           </form>
-          <p className="text-center text-sm text-slate-500 mt-4">
+          <div className="flex justify-center mt-3">
+            <Link
+              href="/auth/forgot-password"
+              className="text-sm text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              {t.forgotPassword}
+            </Link>
+          </div>
+          <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-3">
             {t.noAccount}{" "}
             <Link
               href="/auth/register"
-              className="text-indigo-600 hover:underline font-medium">
+              className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
               {t.register}
             </Link>
           </p>

@@ -39,6 +39,7 @@ export async function updateSession(request: NextRequest) {
   ];
 
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
+  const isAuthWelcome = request.nextUrl.pathname === "/auth/welcome";
   const isOnboarding = request.nextUrl.pathname.startsWith("/onboarding");
   const isAccountDeleted = request.nextUrl.pathname === "/account/deleted";
   const isPublic =
@@ -64,13 +65,13 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Redirect authenticated users away from auth pages
-    if (isAuthPage) {
+    // Redirect authenticated users away from auth pages (except the post-confirm welcome page)
+    if (isAuthPage && !isAuthWelcome) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // Redirect to language selection if not set
-    if (profile && profile.language === null) {
+    // Redirect to language selection if not set (skip for welcome — user goes there via CTA)
+    if (!isAuthWelcome && profile && profile.language === null) {
       return NextResponse.redirect(
         new URL("/onboarding/language", request.url),
       );

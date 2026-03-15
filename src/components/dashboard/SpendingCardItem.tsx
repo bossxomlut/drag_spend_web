@@ -41,6 +41,9 @@ export function SpendingCardItem({ card }: Props) {
   const selectedDate = useAppStore((s) => s.selectedDate);
   const addTransaction = useAppStore((s) => s.addTransaction);
   const removeTransaction = useAppStore((s) => s.removeTransaction);
+  const addHiddenCard = useAppStore((s) => s.addHiddenCard);
+  const removeHiddenCard = useAppStore((s) => s.removeHiddenCard);
+  const updateCard = useAppStore((s) => s.updateCard);
   const existingCount = useAppStore(
     (s) => s.transactionsByDate[selectedDate]?.length ?? 0,
   );
@@ -67,6 +70,7 @@ export function SpendingCardItem({ card }: Props) {
       category: card.category ?? null,
     };
     addTransaction(tempTxn);
+    addHiddenCard(selectedDate, card.id);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1200);
 
@@ -89,6 +93,7 @@ export function SpendingCardItem({ card }: Props) {
         },
         onError: () => {
           removeTransaction(tempId, selectedDate);
+          removeHiddenCard(selectedDate, card.id);
           toast.error(t.toastError);
         },
       },
@@ -152,10 +157,19 @@ export function SpendingCardItem({ card }: Props) {
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!v.is_default) {
-                          setDefaultVariant.mutate({
-                            cardId: card.id,
-                            variantId: v.id,
-                          });
+                          // Optimistic: update default immediately
+                          const optimistic = {
+                            ...card,
+                            variants: card.variants?.map((variant) => ({
+                              ...variant,
+                              is_default: variant.id === v.id,
+                            })),
+                          };
+                          updateCard(optimistic);
+                          setDefaultVariant.mutate(
+                            { cardId: card.id, variantId: v.id },
+                            { onError: () => updateCard(card) },
+                          );
                         }
                       }}
                       className={cn(

@@ -34,6 +34,7 @@ interface AppState {
   // ── Hidden cards per date (visual hint after drag/quick-add) ────
   hiddenCardsByDate: Record<string, string[]>; // date → cardIds
   addHiddenCard: (date: string, cardId: string) => void;
+  removeHiddenCard: (date: string, cardId: string) => void;
   // ── Language / locale ──────────────────────────────────────
   language: string;
   setLanguage: (lang: string) => void;
@@ -123,6 +124,13 @@ export const useAppStore = create<AppState>((set) => ({
       hiddenCardsByDate: {
         ...s.hiddenCardsByDate,
         [date]: [...(s.hiddenCardsByDate[date] ?? []), cardId],
+      },
+    })),
+  removeHiddenCard: (date, cardId) =>
+    set((s) => ({
+      hiddenCardsByDate: {
+        ...s.hiddenCardsByDate,
+        [date]: (s.hiddenCardsByDate[date] ?? []).filter((id) => id !== cardId),
       },
     })),
 

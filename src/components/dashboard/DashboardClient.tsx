@@ -91,6 +91,7 @@ export function DashboardClient() {
   const addTransaction = useAppStore((s) => s.addTransaction);
   const removeTransaction = useAppStore((s) => s.removeTransaction);
   const addHiddenCard = useAppStore((s) => s.addHiddenCard);
+  const removeHiddenCard = useAppStore((s) => s.removeHiddenCard);
 
   const createTransaction = useCreateTransaction();
 
@@ -167,6 +168,7 @@ export function DashboardClient() {
         category: card.category ?? null,
       };
       addTransaction(tempTxn);
+      addHiddenCard(targetDate, card.id);
 
       createTransaction.mutate(
         {
@@ -183,10 +185,10 @@ export function DashboardClient() {
           onSuccess: (real) => {
             removeTransaction(tempId, targetDate);
             addTransaction(real);
-            addHiddenCard(targetDate, card.id);
           },
           onError: () => {
             removeTransaction(tempId, targetDate);
+            removeHiddenCard(targetDate, card.id);
           },
         },
       );

@@ -279,9 +279,6 @@ export function useDeleteCard() {
 
 // Update the default variant selection (called when user picks a variant)
 export function useSetDefaultVariant() {
-  const qc = useQueryClient();
-  const updateCard = useAppStore((s) => s.updateCard);
-
   return useMutation({
     mutationFn: async ({
       cardId,
@@ -299,19 +296,8 @@ export function useSetDefaultVariant() {
         .from("card_variants")
         .update({ is_default: true })
         .eq("id", variantId);
-
-      const { data: full, error } = await supabase
-        .from("spending_cards")
-        .select("*, category:categories(*), variants:card_variants(*)")
-        .eq("id", cardId)
-        .single();
-      if (error) throw error;
-      return full as SpendingCard;
     },
-    onSuccess: (card) => {
-      updateCard(card);
-      qc.invalidateQueries({ queryKey: ["cards"] });
-    },
+    // Optimistic update is handled in SpendingCardItem; no store/query update on success
     onError: (e: Error) => toast.error(e.message),
   });
 }

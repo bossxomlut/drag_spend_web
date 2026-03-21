@@ -13,9 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { useAppStore } from "@/store/useAppStore";
 import {
-  useProfile,
-  useCategories,
-  useCards,
+  useInitialDashboardData,
   useCreateTransaction,
 } from "@/hooks/useData";
 import { CardPanel } from "./CardPanel";
@@ -83,9 +81,7 @@ const VIEWS = (components: {
 ];
 
 export function DashboardClient() {
-  useProfile();
-  useCategories();
-  useCards();
+  useInitialDashboardData();
 
   const setIsDragging = useAppStore((s) => s.setIsDragging);
   const addTransaction = useAppStore((s) => s.addTransaction);

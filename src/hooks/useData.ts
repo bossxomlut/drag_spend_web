@@ -18,6 +18,70 @@ import { toast } from "sonner";
 
 const supabase = createClient();
 
+// ─── Parallel Initial Data Fetch ─────────────────────────────
+
+export function useInitialDashboardData() {
+  const setLanguage = useAppStore((s) => s.setLanguage);
+  const setCategories = useAppStore((s) => s.setCategories);
+  const setCards = useAppStore((s) => s.setCards);
+
+  return useQuery({
+    queryKey: ["initial-dashboard"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const [profileRes, categoriesRes, cardsRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).single(),
+        supabase.from("categories").select("*").order("type").order("name"),
+        supabase
+          .from("spending_cards")
+          .select(
+            `*, category:categories(*), variants:card_variants(*)`,
+          )
+          .eq("user_id", user.id)
+          .order("use_count", { ascending: false })
+          .order("position"),
+      ]);
+
+      if (profileRes.error) throw profileRes.error;
+      if (categoriesRes.error) throw categoriesRes.error;
+      if (cardsRes.error) throw cardsRes.error;
+
+      const profile = profileRes.data;
+      const storedLang = localStorage.getItem("ui_language");
+      const effectiveLang =
+        storedLang === "vi" || storedLang === "en"
+          ? storedLang
+          : profile.language;
+      if (effectiveLang) {
+        setLanguage(effectiveLang);
+        localStorage.setItem("ui_language", effectiveLang);
+        if (profile.language && effectiveLang !== profile.language) {
+          supabase
+            .from("profiles")
+            .update({ language: effectiveLang })
+            .eq("id", user.id)
+            .then(() => {});
+        }
+      }
+
+      setCategories(categoriesRes.data as Category[]);
+      setCards(cardsRes.data as SpendingCard[]);
+
+      return {
+        profile: profile as Profile,
+        categories: categoriesRes.data as Category[],
+        cards: cardsRes.data as SpendingCard[],
+      };
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
 // ─── Profile ─────────────────────────────────────────────────
 
 export function useProfile() {

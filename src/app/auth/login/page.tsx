@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { QueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +45,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const queryClient = new QueryClient();
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -57,7 +59,6 @@ export default function LoginPage() {
     if (error) {
       toast.error(error.message);
     } else {
-      // Check soft-deletion before navigating (avoids an extra middleware hop)
       const { data: profile } = await supabase
         .from("profiles")
         .select("deleted_at")
@@ -70,6 +71,28 @@ export default function LoginPage() {
           `/account/deleted?since=${encodeURIComponent(profile.deleted_at)}`,
         );
       } else {
+        queryClient.prefetchQuery({
+          queryKey: ["initial-dashboard"],
+          queryFn: async () => {
+            const [profileRes, categoriesRes, cardsRes] = await Promise.all([
+              supabase.from("profiles").select("*").eq("id", data.user.id).single(),
+              supabase.from("categories").select("*").order("type").order("name"),
+              supabase.from("spending_cards").select("*, category:categories(*), variants:card_variants(*)").eq("user_id", data.user.id).order("use_count", { ascending: false }).order("position"),
+            ]);
+            return {
+              profile: profileRes.data,
+              categories: categoriesRes.data || [],
+              cards: cardsRes.data || [],
+            };
+          },
+        });
+        queryClient.prefetchQuery({
+          queryKey: ["transactions", new Date().toISOString().slice(0, 10)],
+          queryFn: async () => {
+            const { data } = await supabase.from("transactions").select("*, category:categories(*)").eq("date", new Date().toISOString().slice(0, 10)).order("position");
+            return data || [];
+          },
+        });
         router.push("/dashboard");
         router.refresh();
       }

@@ -51,6 +51,8 @@ const T = {
     chartBarIncome: "Thu nhập",
     chartBarExpense: "Chi tiêu",
     categoryOther: "Khác",
+    catTxTitle: "Giao dịch",
+    catTxEmpty: "Không có giao dịch nào",
     // CreateCardDialog
     createCardTitleNew: "Tạo thẻ mới",
     createCardTitleEdit: "Chỉnh sửa thẻ",
@@ -163,6 +165,8 @@ const T = {
     chartBarIncome: "Income",
     chartBarExpense: "Expenses",
     categoryOther: "Other",
+    catTxTitle: "Transactions",
+    catTxEmpty: "No transactions",
     createCardTitleNew: "Create new card",
     createCardTitleEdit: "Edit card",
     cardNameLabel: "Card name",

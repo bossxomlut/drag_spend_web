@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   format,
   eachDayOfInterval,
@@ -14,12 +14,15 @@ import { useMonthlyReport } from "@/hooks/useData";
 import { formatCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { useDashboardT } from "@/hooks/useDashboardT";
+import type { Transaction } from "@/types";
 import {
   TrendingDown,
   TrendingUp,
   Flame,
   CalendarDays,
   Sigma,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -51,7 +54,9 @@ export function ReportView() {
   const locale = useLocale();
   const t = useDashboardT();
   const viewMonth = useAppStore((s) => s.viewMonth);
+  const transactionsByDate = useAppStore((s) => s.transactionsByDate);
   const { data: reportData = [] } = useMonthlyReport(viewMonth);
+  const [selectedCatKey, setSelectedCatKey] = useState<string | null>(null);
 
   const [year, month] = viewMonth.split("-").map(Number);
   const firstOfMonth = new Date(year, month - 1, 1);
@@ -82,13 +87,20 @@ export function ReportView() {
   const categoryData = useMemo(() => {
     const map: Record<
       string,
-      { name: string; icon: string; value: number; color: string }
+      {
+        id: string | null;
+        name: string;
+        icon: string;
+        value: number;
+        color: string;
+      }
     > = {};
     for (const row of reportData) {
       if (row.type !== "expense") continue;
       const key = row.category_id ?? "__none__";
       if (!map[key]) {
         map[key] = {
+          id: row.category_id,
           name: row.category_name ?? t.categoryOther,
           icon: row.category_icon ?? "📦",
           value: 0,
@@ -99,6 +111,27 @@ export function ReportView() {
     }
     return Object.values(map).sort((a, b) => b.value - a.value);
   }, [reportData, t]);
+
+  // ── Transactions grouped by category key ─────────────────
+  const catTxMap = useMemo(() => {
+    const all: Transaction[] = Object.values(transactionsByDate)
+      .flat()
+      .filter(
+        (txn) => txn.type === "expense" && txn.date.startsWith(viewMonth),
+      );
+    const map: Record<string, Transaction[]> = {};
+    for (const txn of all) {
+      const key = txn.category_id ?? "__none__";
+      if (!map[key]) map[key] = [];
+      map[key].push(txn);
+    }
+    for (const key of Object.keys(map)) {
+      map[key].sort(
+        (a, b) => b.date.localeCompare(a.date) || a.position - b.position,
+      );
+    }
+    return map;
+  }, [transactionsByDate, viewMonth]);
 
   // ── Summary stats ────────────────────────────────────────
   const stats = useMemo(() => {
@@ -282,39 +315,95 @@ export function ReportView() {
                 </ResponsiveContainer>
 
                 {/* Category breakdown list */}
-                <div className="space-y-1.5 mt-2">
+                <div className="space-y-1 mt-2">
                   {categoryData.map((cat, i) => {
                     const pct =
                       stats.totalExpense > 0
                         ? Math.round((cat.value / stats.totalExpense) * 100)
                         : 0;
+                    const catKey = cat.id ?? "__none__";
+                    const isOpen = selectedCatKey === catKey;
+                    const txns = catTxMap[catKey] ?? [];
                     return (
-                      <div key={cat.name} className="flex items-center gap-2">
-                        <span className="text-sm leading-none">{cat.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-[11px] text-slate-600 truncate">
-                              {cat.name}
-                            </span>
-                            <span className="text-[11px] font-semibold text-slate-500 ml-2 shrink-0">
-                              {pct}%
-                            </span>
+                      <div key={cat.name}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedCatKey(isOpen ? null : catKey)
+                          }
+                          className={cn(
+                            "w-full flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors text-left",
+                            isOpen
+                              ? "bg-slate-100 dark:bg-slate-800"
+                              : "hover:bg-slate-50 dark:hover:bg-slate-800/60",
+                          )}>
+                          <span className="text-sm leading-none">
+                            {cat.icon}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-[11px] text-slate-600 dark:text-slate-300 truncate">
+                                {cat.name}
+                              </span>
+                              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 ml-2 shrink-0">
+                                {pct}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${pct}%`,
+                                  backgroundColor:
+                                    cat.color ||
+                                    CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+                                }}
+                              />
+                            </div>
                           </div>
-                          <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{
-                                width: `${pct}%`,
-                                backgroundColor:
-                                  cat.color ||
-                                  CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-                              }}
-                            />
+                          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 w-12 text-right">
+                            {formatCompact(cat.value)}
+                          </span>
+                          {isOpen ? (
+                            <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
+                          ) : (
+                            <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />
+                          )}
+                        </button>
+
+                        {/* Drill-down: individual transactions */}
+                        {isOpen && (
+                          <div className="ml-6 mr-1 mb-1.5 mt-0.5 rounded-lg border border-slate-100 dark:border-slate-700 overflow-hidden">
+                            <div className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-700">
+                              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                                {t.catTxTitle} ({txns.length})
+                              </span>
+                            </div>
+                            {txns.length === 0 ? (
+                              <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center py-3">
+                                {t.catTxEmpty}
+                              </p>
+                            ) : (
+                              <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                                {txns.map((txn) => (
+                                  <div
+                                    key={txn.id}
+                                    className="flex items-center gap-2 px-2.5 py-1.5">
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0 w-8">
+                                      {format(parseISO(txn.date), "d/MM")}
+                                    </span>
+                                    <span className="flex-1 text-[11px] text-slate-600 dark:text-slate-300 truncate">
+                                      {txn.title}
+                                    </span>
+                                    <span className="text-[11px] font-semibold text-red-500 dark:text-red-400 shrink-0">
+                                      -{formatCompact(txn.amount)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                        <span className="text-[11px] font-semibold text-slate-500 shrink-0 w-12 text-right">
-                          {formatCompact(cat.value)}
-                        </span>
+                        )}
                       </div>
                     );
                   })}

@@ -711,3 +711,50 @@ export function useCopyFromYesterday() {
     onError: (e: Error) => toast.error(e.message),
   });
 }
+
+export function useCloneTransaction() {
+  const qc = useQueryClient();
+  const addTransaction = useAppStore((s) => s.addTransaction);
+
+  return useMutation({
+    mutationFn: async ({
+      txn,
+      position,
+    }: {
+      txn: Transaction;
+      position: number;
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: user.id,
+          source_card_id: txn.source_card_id ?? null,
+          date: txn.date,
+          title: txn.title,
+          amount: txn.amount,
+          category_id: txn.category_id ?? null,
+          type: txn.type,
+          note: txn.note ?? null,
+          position,
+        })
+        .select("*, category:categories(*)")
+        .single();
+      if (error) throw error;
+      return data as Transaction;
+    },
+    onSuccess: (txn) => {
+      addTransaction(txn);
+      // No day-level invalidation — addTransaction already updates the store,
+      // a redundant refetch would cause a double re-render.
+      qc.invalidateQueries({
+        queryKey: ["transactions-month", txn.date.slice(0, 7)],
+      });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}

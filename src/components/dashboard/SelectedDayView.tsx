@@ -25,6 +25,7 @@ import {
   useSaveTransactionAsCard,
   useCopyFromYesterday,
   useUpdateTransaction,
+  useCloneTransaction,
 } from "@/hooks/useData";
 import { formatVND, formatCompact, parseCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ import {
   BookmarkPlus,
   GripVertical,
   Copy,
+  CopyPlus,
   Loader2,
   LayoutList,
   Table2,
@@ -85,6 +87,13 @@ export function SelectedDayView() {
   const handleSave = useCallback(
     (txn: Transaction) => saveAsCard.mutate(txn),
     [saveAsCard],
+  );
+  const cloneTransaction = useCloneTransaction();
+  const handleClone = useCallback(
+    (txn: Transaction) => {
+      cloneTransaction.mutate({ txn, position: transactions.length });
+    },
+    [cloneTransaction, transactions.length],
   );
   const [pendingEditTxn, setPendingEditTxn] = useState<Transaction | null>(
     null,
@@ -523,6 +532,7 @@ export function SelectedDayView() {
                         onRequestEdit={setPendingEditTxn}
                         onRequestDelete={setPendingDeleteTxn}
                         onSave={handleSave}
+                        onClone={handleClone}
                       />
                     ))}
                   </div>
@@ -549,6 +559,7 @@ export function SelectedDayView() {
                         onRequestEdit={setPendingEditTxn}
                         onRequestDelete={setPendingDeleteTxn}
                         onSave={handleSave}
+                        onClone={handleClone}
                       />
                     ))}
                   </div>
@@ -733,6 +744,7 @@ interface TransactionItemFullProps {
   onRequestEdit: (txn: Transaction) => void;
   onRequestDelete: (txn: Transaction) => void;
   onSave: (txn: Transaction) => void;
+  onClone: (txn: Transaction) => void;
 }
 
 const TransactionItemFull = memo(function TransactionItemFull({
@@ -741,6 +753,7 @@ const TransactionItemFull = memo(function TransactionItemFull({
   onRequestEdit,
   onRequestDelete,
   onSave,
+  onClone,
 }: TransactionItemFullProps) {
   const {
     attributes,
@@ -809,6 +822,12 @@ const TransactionItemFull = memo(function TransactionItemFull({
             className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 hover:text-indigo-500 transition-colors"
             title={t.btnTitleEdit}>
             <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => onClone(txn)}
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-400 hover:text-indigo-500 transition-colors"
+            title={t.btnTitleClone}>
+            <CopyPlus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => onSave(txn)}

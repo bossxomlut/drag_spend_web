@@ -39,9 +39,7 @@ export function useInitialDashboardData() {
         supabase.from("categories").select("*").order("type").order("name"),
         supabase
           .from("spending_cards")
-          .select(
-            `*, category:categories(*), variants:card_variants(*)`,
-          )
+          .select(`*, category:categories(*), variants:card_variants(*)`)
           .eq("user_id", user.id)
           .order("use_count", { ascending: false })
           .order("position"),

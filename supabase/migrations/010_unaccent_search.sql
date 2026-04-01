@@ -82,7 +82,7 @@ AS $$
     AND (p_category_id IS NULL OR t.category_id = p_category_id)
     AND (p_min_amount  IS NULL OR t.amount      >= p_min_amount)
     AND (p_max_amount  IS NULL OR t.amount      <= p_max_amount)
-  ORDER BY t.date DESC, t.txn_position, t.id
+  ORDER BY t.date DESC, t.position, t.id
   LIMIT  p_limit
   OFFSET p_offset;
 $$;

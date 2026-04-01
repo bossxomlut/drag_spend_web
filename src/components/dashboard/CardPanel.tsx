@@ -6,7 +6,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { useLocale } from "@/hooks/useLocale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, CalendarDays } from "lucide-react";
+import { Plus, CalendarDays, Search } from "lucide-react";
 import { SpendingCardItem } from "./SpendingCardItem";
 import { CreateCardDialog } from "./CreateCardDialog";
 import { useDashboardT } from "@/hooks/useDashboardT";
@@ -45,19 +45,19 @@ export function CardPanel() {
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 p-0 overflow-hidden transition-all duration-300">
       {/* Header */}
-      <div className="p-3 border-b border-slate-100 space-y-2">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-slate-700 text-sm">
+      <div className="px-5 pt-5 pb-3 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-b from-slate-50/80 dark:from-slate-800/80 to-transparent">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-extrabold text-base text-slate-800 dark:text-white tracking-tight">
             {t.panelTitle}
           </h2>
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 w-7 p-0 text-indigo-600 hover:bg-indigo-50"
+            className="h-8 w-8 p-0 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-full shadow"
             onClick={() => setOpenCreate(true)}>
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
           </Button>
         </div>
         <div className="relative">

@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { TrendingDown, LogOut, User, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardLanguageSwitcher } from "@/components/dashboard/DashboardLanguageSwitcher";
+import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar";
 import { useDashboardT } from "@/hooks/useDashboardT";
 
 export function DashboardHeader() {
@@ -76,57 +77,65 @@ export function DashboardHeader() {
 
   return (
     <>
-      <header className="h-12 lg:h-14 bg-slate-900 text-white flex items-center justify-between px-3 lg:px-4 flex-shrink-0 shadow-md">
-        <div className="flex items-center gap-2">
+      <header className="h-14 bg-slate-900 text-white flex items-center gap-3 px-4 flex-shrink-0 border-b border-slate-800">
+        {/* Logo */}
+        <div className="flex items-center gap-2 shrink-0">
           <div className="bg-indigo-500 rounded-lg p-1.5">
             <TrendingDown className="w-4 h-4" />
           </div>
-          <span className="font-bold text-base lg:text-lg tracking-tight">
+          <span className="font-bold text-base tracking-tight select-none hidden sm:inline">
             Drag Spend
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Search — centred, moderate width */}
+        <div className="flex-1 flex justify-center">
+          <DashboardSearchBar />
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
           <DashboardLanguageSwitcher />
           {/* User info popover */}
           <Popover>
             <PopoverTrigger className="text-slate-400 hover:text-white hover:bg-slate-800 h-8 w-8 rounded-full flex items-center justify-center transition-colors">
               {userName ? (
-                <span className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-[11px] font-bold text-white">
+                <span className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[13px] font-bold text-white">
                   {initials}
                 </span>
               ) : (
                 <User className="w-4 h-4" />
               )}
             </PopoverTrigger>
-            <PopoverContent className="w-56 p-3" align="end">
+            <PopoverContent
+              className="w-56 p-3 rounded-xl shadow-xl border border-slate-700 bg-slate-900 text-white"
+              align="end">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center text-sm font-bold text-white shrink-0">
                   {initials}
                 </div>
                 <div className="min-w-0">
                   {userName && (
-                    <p className="text-sm font-semibold text-slate-800 truncate">
+                    <p className="text-sm font-semibold text-white truncate">
                       {userName}
                     </p>
                   )}
                   {userEmail && (
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="text-xs text-slate-400 truncate">
                       {userEmail}
                     </p>
                   )}
                 </div>
               </div>
-              <Separator className="mb-2" />
+              <Separator className="mb-2 bg-slate-700" />
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-slate-200 hover:bg-red-600/20 hover:text-red-400 transition-colors">
                 <LogOut className="w-3.5 h-3.5" />
                 {t.logout}
               </button>
               <button
                 onClick={() => setDeleteDialogOpen(true)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors mt-0.5">
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-slate-500 hover:bg-red-600/20 hover:text-red-400 transition-colors mt-0.5">
                 <Trash2 className="w-3.5 h-3.5" />
                 {t.deleteAccount}
               </button>

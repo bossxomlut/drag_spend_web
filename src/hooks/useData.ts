@@ -13,6 +13,7 @@ import type {
   CreateTransactionPayload,
   UpdateTransactionPayload,
   Profile,
+  MonthlyBudget,
 } from "@/types";
 import { toast } from "sonner";
 
@@ -389,7 +390,6 @@ export function useTransactions(date: string) {
 
 export function useCreateTransaction() {
   const qc = useQueryClient();
-  const addTransaction = useAppStore((s) => s.addTransaction);
   const updateCard = useAppStore((s) => s.updateCard);
 
   return useMutation({
@@ -455,7 +455,9 @@ export function useUpdateTransaction() {
     mutationFn: async (
       payload: UpdateTransactionPayload & { date: string },
     ) => {
-      const { id, date, ...rest } = payload;
+      // Destructure `date` out of rest so it isn't sent to Supabase (only used for cache invalidation via `txn.date` on success)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, date: _, ...rest } = payload;
       const { data, error } = await supabase
         .from("transactions")
         .update({ ...rest, updated_at: new Date().toISOString() })
@@ -705,6 +707,89 @@ export function useCopyFromYesterday() {
         queryKey: ["transactions-month", targetDate.slice(0, 7)],
       });
       toast.success(`Đã sao chép ${transactions.length} giao dịch từ hôm qua`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ─── Monthly Budgets ─────────────────────────────────────────
+
+export function useMonthlyBudgets(month: string) {
+  const setBudgets = useAppStore((s) => s.setBudgets);
+  return useQuery({
+    queryKey: ["budgets", month],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("monthly_budgets")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("month", month);
+      if (error) throw error;
+      setBudgets(month, data as MonthlyBudget[]);
+      return data as MonthlyBudget[];
+    },
+    enabled: !!month,
+    staleTime: 60_000,
+  });
+}
+
+export function useUpsertBudget() {
+  const qc = useQueryClient();
+  const upsertBudgetInStore = useAppStore((s) => s.upsertBudgetInStore);
+  const removeBudgetFromStore = useAppStore((s) => s.removeBudgetFromStore);
+
+  return useMutation({
+    mutationFn: async ({
+      category_id,
+      month,
+      amount,
+    }: {
+      category_id: string;
+      month: string;
+      amount: number;
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      if (amount <= 0) {
+        await supabase
+          .from("monthly_budgets")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("category_id", category_id)
+          .eq("month", month);
+        return null;
+      }
+      const { data, error } = await supabase
+        .from("monthly_budgets")
+        .upsert(
+          {
+            user_id: user.id,
+            category_id,
+            month,
+            amount,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,category_id,month" },
+        )
+        .select()
+        .single();
+      if (error) throw error;
+      return data as MonthlyBudget;
+    },
+    onSuccess: (result, { category_id, month }) => {
+      if (result) {
+        upsertBudgetInStore(result);
+      } else {
+        removeBudgetFromStore(category_id, month);
+      }
+      qc.invalidateQueries({ queryKey: ["budgets", month] });
+      toast.success("Đã lưu ngân sách");
     },
     onError: (e: Error) => toast.error(e.message),
   });

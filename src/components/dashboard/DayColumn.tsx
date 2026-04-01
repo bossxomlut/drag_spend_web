@@ -29,7 +29,7 @@ export const DayColumn = memo(function DayColumn({ date, isSelected }: Props) {
     id: `day-${date}`,
   });
 
-  const { totalExpense, totalIncome, net } = useMemo(() => {
+  const { net } = useMemo(() => {
     const exp = transactions
       .filter((txn) => txn.type === "expense")
       .reduce((s, txn) => s + txn.amount, 0);

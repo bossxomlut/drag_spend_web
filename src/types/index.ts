@@ -110,3 +110,11 @@ export interface DayTotal {
 export type DragItem =
   | { kind: "card"; card: SpendingCard }
   | { kind: "transaction"; transaction: Transaction; fromDate: string };
+
+export interface MonthlyBudget {
+  id: string;
+  user_id: string;
+  category_id: string;
+  month: string; // YYYY-MM
+  amount: number;
+}

@@ -125,6 +125,18 @@ export function DashboardSearchBar() {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // ⌘K / Ctrl+K global shortcut to open search
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setOpen(true);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
   // Stable refs so the IntersectionObserver callback reads fresh values
   const pageRef = useRef(1);
   const hasMoreRef = useRef(false);

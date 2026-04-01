@@ -141,7 +141,7 @@ export function CardPanel() {
         </div>
       )}
 
-      <CreateCardDialog open={openCreate} onOpenChange={setOpenCreate} />
+      <CreateCardDialog key={openCreate ? "open" : "closed"} open={openCreate} onOpenChange={setOpenCreate} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { useUpdateTransaction } from "@/hooks/useData";
 import { parseCompact } from "@/lib/currency";
@@ -44,16 +44,6 @@ export function EditTransactionDialog({
   const [note, setNote] = useState(transaction.note ?? "");
   const [createCatOpen, setCreateCatOpen] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      setTitle(transaction.title);
-      setAmount(String(transaction.amount));
-      setType(transaction.type);
-      setCategoryId(transaction.category_id);
-      setNote(transaction.note ?? "");
-    }
-  }, [open, transaction]);
-
   const filteredCategories = categories.filter((c) => c.type === type);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -73,6 +63,7 @@ export function EditTransactionDialog({
   return (
     <>
       <CreateCategoryDialog
+        key={createCatOpen ? "open" : "closed"}
         open={createCatOpen}
         onOpenChange={setCreateCatOpen}
         defaultType={type}

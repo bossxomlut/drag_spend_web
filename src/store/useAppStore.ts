@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { format } from "date-fns";
-import type { SpendingCard, Transaction, Category } from "@/types";
+import type { SpendingCard, Transaction, Category, MonthlyBudget } from "@/types";
 
 interface AppState {
   // ── Selected date ──────────────────────────────────────────
@@ -38,6 +38,12 @@ interface AppState {
   // ── Language / locale ──────────────────────────────────────
   language: string;
   setLanguage: (lang: string) => void;
+
+  // ── Monthly budgets ─────────────────────────────────────────
+  budgets: Record<string, MonthlyBudget[]>; // key: YYYY-MM
+  setBudgets: (month: string, budgets: MonthlyBudget[]) => void;
+  upsertBudgetInStore: (budget: MonthlyBudget) => void;
+  removeBudgetFromStore: (categoryId: string, month: string) => void;
 
   // ── UI state ───────────────────────────────────────────────
   isDragging: boolean;
@@ -137,6 +143,28 @@ export const useAppStore = create<AppState>((set) => ({
   // ── Language / locale ──────────────────────────────────────
   language: "vi",
   setLanguage: (language) => set({ language }),
+
+  // ── Monthly budgets ────────────────────────────────────────
+  budgets: {},
+  setBudgets: (month, budgets) =>
+    set((s) => ({ budgets: { ...s.budgets, [month]: budgets } })),
+  upsertBudgetInStore: (budget) =>
+    set((s) => {
+      const existing = s.budgets[budget.month] ?? [];
+      const idx = existing.findIndex((b) => b.category_id === budget.category_id);
+      const updated =
+        idx >= 0
+          ? existing.map((b, i) => (i === idx ? budget : b))
+          : [...existing, budget];
+      return { budgets: { ...s.budgets, [budget.month]: updated } };
+    }),
+  removeBudgetFromStore: (categoryId, month) =>
+    set((s) => ({
+      budgets: {
+        ...s.budgets,
+        [month]: (s.budgets[month] ?? []).filter((b) => b.category_id !== categoryId),
+      },
+    })),
 
   // ── UI ─────────────────────────────────────────────────────
   isDragging: false,

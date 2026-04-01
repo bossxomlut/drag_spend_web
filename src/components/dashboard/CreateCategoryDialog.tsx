@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useCreateCategory } from "@/hooks/useData";
 import { cn } from "@/lib/utils";
 import {
@@ -73,14 +73,7 @@ export function CreateCategoryDialog({
   const [color, setColor] = useState("#6366f1");
   const [type, setType] = useState<TransactionType>(defaultType);
 
-  useEffect(() => {
-    if (open) {
-      setName("");
-      setIcon("📦");
-      setColor("#6366f1");
-      setType(defaultType);
-    }
-  }, [open, defaultType]);
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

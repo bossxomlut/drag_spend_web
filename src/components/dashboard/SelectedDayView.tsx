@@ -213,12 +213,14 @@ export function SelectedDayView() {
   const prevExpenseLen = useRef(0);
   const prevIncomeLen = useRef(0);
 
-  // Reset chunking when date or list size changes
+  // Reset chunking when date changes (expenses.length intentionally omitted —
+  // expansion is handled by the effects below to avoid resetting mid-scroll)
   useEffect(() => {
     setExpenseRenderCount(Math.min(INITIAL_CHUNK, expenses.length));
     setIncomeRenderCount(Math.min(INITIAL_CHUNK, incomes.length));
     prevExpenseLen.current = expenses.length;
     prevIncomeLen.current = incomes.length;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   // Clamp (or auto-expand) render count when list length changes

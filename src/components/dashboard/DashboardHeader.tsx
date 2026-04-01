@@ -18,10 +18,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { TrendingDown, LogOut, User, Trash2 } from "lucide-react";
+import { TrendingDown, LogOut, User, Trash2, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardLanguageSwitcher } from "@/components/dashboard/DashboardLanguageSwitcher";
 import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar";
+import { SettingsDialog } from "@/components/dashboard/SettingsDialog";
 import { useDashboardT } from "@/hooks/useDashboardT";
 
 export function DashboardHeader() {
@@ -31,6 +32,7 @@ export function DashboardHeader() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -128,6 +130,12 @@ export function DashboardHeader() {
               </div>
               <Separator className="mb-2 bg-slate-700" />
               <button
+                onClick={() => setSettingsOpen(true)}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition-colors">
+                <Settings className="w-3.5 h-3.5" />
+                {t.settingsBtn}
+              </button>
+              <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-slate-200 hover:bg-red-600/20 hover:text-red-400 transition-colors">
                 <LogOut className="w-3.5 h-3.5" />
@@ -143,6 +151,14 @@ export function DashboardHeader() {
           </Popover>
         </div>
       </header>
+
+      <SettingsDialog
+        key={settingsOpen ? "open" : "closed"}
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        initialName={userName}
+        onOpenDeleteAccount={() => setDeleteDialogOpen(true)}
+      />
 
       {/* Delete account confirmation dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

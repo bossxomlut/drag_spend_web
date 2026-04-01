@@ -19,7 +19,6 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <head>
         {process.env.NODE_ENV === "production" && (
-          // eslint-disable-next-line @next/next/no-sync-scripts
           <script
             async
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID}`}

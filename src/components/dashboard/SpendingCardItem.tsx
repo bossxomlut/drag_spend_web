@@ -273,6 +273,7 @@ export function SpendingCardItem({ card }: Props) {
         </div>
       </div>
       <CreateCardDialog
+        key={editOpen ? card.id : "closed"}
         open={editOpen}
         onOpenChange={setEditOpen}
         editCard={card}

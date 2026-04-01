@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { useCreateCard, useUpdateCard } from "@/hooks/useData";
 import { parseCompact } from "@/lib/currency";
@@ -16,7 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Check, Tag } from "lucide-react";
 import type { SpendingCard, TransactionType } from "@/types";
 import { useDashboardT } from "@/hooks/useDashboardT";
@@ -40,42 +39,23 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
   const createCard = useCreateCard();
   const updateCard = useUpdateCard();
 
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState<TransactionType>("expense");
-  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [title, setTitle] = useState(editCard?.title ?? "");
+  const [type, setType] = useState<TransactionType>(editCard?.type ?? "expense");
+  const [categoryId, setCategoryId] = useState<string | null>(editCard?.category_id ?? null);
   const [createCatOpen, setCreateCatOpen] = useState(false);
-  const [note, setNote] = useState("");
-  const [variants, setVariants] = useState<Variant[]>([
-    { label: "", amount: "", is_default: true },
-  ]);
-
-  // Populate when editing
-  useEffect(() => {
-    if (editCard && open) {
-      setTitle(editCard.title);
-      setType(editCard.type);
-      setCategoryId(editCard.category_id);
-      setNote(editCard.note ?? "");
-      setVariants(
-        editCard.variants && editCard.variants.length > 0
-          ? editCard.variants
-              .sort((a, b) => a.position - b.position)
-              .map((v) => ({
-                id: v.id,
-                label: v.label ?? "",
-                amount: String(v.amount),
-                is_default: v.is_default,
-              }))
-          : [{ label: "", amount: "", is_default: true }],
-      );
-    } else if (!editCard && open) {
-      setTitle("");
-      setType("expense");
-      setCategoryId(null);
-      setNote("");
-      setVariants([{ label: "", amount: "", is_default: true }]);
-    }
-  }, [editCard, open]);
+  const [note, setNote] = useState(editCard?.note ?? "");
+  const [variants, setVariants] = useState<Variant[]>(
+    editCard?.variants && editCard.variants.length > 0
+      ? editCard.variants
+          .sort((a, b) => a.position - b.position)
+          .map((v) => ({
+            id: v.id,
+            label: v.label ?? "",
+            amount: String(v.amount),
+            is_default: v.is_default,
+          }))
+      : [{ label: "", amount: "", is_default: true }],
+  );
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
@@ -145,6 +125,7 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
   return (
     <>
       <CreateCategoryDialog
+        key={createCatOpen ? "open" : "closed"}
         open={createCatOpen}
         onOpenChange={setCreateCatOpen}
         defaultType={type}

@@ -170,6 +170,18 @@ const T = {
     removeBudget: "Xoá",
     budgetOf: (spent: string, budget: string) => `${spent} / ${budget}`,
     budgetOver: "Vượt ngân sách!",
+    // Recurring
+    recurringLabel: "Định kỳ hàng tháng",
+    recurringDayLabel: "Vào ngày",
+    recurringDayHint: "Tự động nhắc vào ngày này mỗi tháng",
+    recurringBanner: (n: number) =>
+      `${n} khoản định kỳ chưa được thêm tháng này`,
+    recurringOnDay: (day: number) => `ngày ${day}`,
+    recurringApplyAll: "Thêm tất cả",
+    recurringAddOne: "Thêm",
+    recurringApplied: (n: number) => `Đã thêm ${n} khoản định kỳ`,
+    recurringNoneLeft: "Tất cả khoản định kỳ đã được thêm",
+    recurringBadge: "Định kỳ",
   },
   en: {
     tabCards: "Cards",
@@ -327,6 +339,19 @@ const T = {
     removeBudget: "Remove",
     budgetOf: (spent: string, budget: string) => `${spent} / ${budget}`,
     budgetOver: "Over budget!",
+    // Recurring
+    recurringLabel: "Monthly recurring",
+    recurringDayLabel: "On day",
+    recurringDayHint: "Auto-remind on this day each month",
+    recurringBanner: (n: number) =>
+      `${n} recurring item${n === 1 ? "" : "s"} not yet added this month`,
+    recurringOnDay: (day: number) => `day ${day}`,
+    recurringApplyAll: "Add all",
+    recurringAddOne: "Add",
+    recurringApplied: (n: number) =>
+      `Added ${n} recurring item${n === 1 ? "" : "s"}`,
+    recurringNoneLeft: "All recurring items already added",
+    recurringBadge: "Recurring",
   },
 };
 

@@ -41,6 +41,8 @@ export interface SpendingCard {
   note: string | null;
   position: number;
   use_count: number;
+  is_recurring: boolean;
+  recurring_day: number | null; // 1–31, day of month
   created_at: string;
   updated_at: string;
   // joined
@@ -72,6 +74,8 @@ export interface CreateCardPayload {
   category_id: string | null;
   type: TransactionType;
   note?: string;
+  is_recurring?: boolean;
+  recurring_day?: number | null;
   variants: { label: string | null; amount: number; is_default: boolean }[];
 }
 

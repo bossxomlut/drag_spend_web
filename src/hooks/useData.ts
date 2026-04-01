@@ -231,6 +231,8 @@ export function useCreateCard() {
           category_id: payload.category_id,
           type: payload.type,
           note: payload.note ?? null,
+          is_recurring: payload.is_recurring ?? false,
+          recurring_day: payload.recurring_day ?? null,
         })
         .select()
         .single();
@@ -790,6 +792,97 @@ export function useUpsertBudget() {
       }
       qc.invalidateQueries({ queryKey: ["budgets", month] });
       toast.success("Đã lưu ngân sách");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ─── Recurring transactions ──────────────────────────────────────
+
+/**
+ * Returns recurring cards that are due (recurring_day <= today's day-of-month)
+ * but don't yet have a transaction in yearMonth for that day.
+ */
+export function usePendingRecurring(yearMonth: string) {
+  const cards = useAppStore((s) => s.cards);
+  const transactionsByDate = useAppStore((s) => s.transactionsByDate);
+
+  const [year, month] = yearMonth.split("-").map(Number);
+  const today = new Date();
+  const isCurrentMonth =
+    today.getFullYear() === year && today.getMonth() + 1 === month;
+  const lastDayOfMonth = new Date(year, month, 0).getDate();
+  const cutoffDay = isCurrentMonth ? today.getDate() : lastDayOfMonth;
+
+  return cards.filter((card) => {
+    if (!card.is_recurring || !card.recurring_day) return false;
+    // Clamp to last day of month (e.g. day 31 in Feb → day 28/29)
+    const effectiveDay = Math.min(card.recurring_day, lastDayOfMonth);
+    if (effectiveDay > cutoffDay) return false;
+    const dateStr = `${yearMonth}-${String(effectiveDay).padStart(2, "0")}`;
+    const txnsOnDay = transactionsByDate[dateStr] ?? [];
+    // Already added if any transaction originated from this card on that day
+    return !txnsOnDay.some((t) => t.source_card_id === card.id);
+  });
+}
+
+export function useApplyRecurring() {
+  const qc = useQueryClient();
+  const addTransaction = useAppStore((s) => s.addTransaction);
+
+  return useMutation({
+    mutationFn: async ({
+      cards,
+      yearMonth,
+    }: {
+      cards: SpendingCard[];
+      yearMonth: string;
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const [rYear, rMonth] = yearMonth.split("-").map(Number);
+      const lastDay = new Date(rYear, rMonth, 0).getDate();
+
+      const toInsert = cards
+        .map((card) => {
+          const defaultVariant =
+            card.variants?.find((v) => v.is_default) ?? card.variants?.[0];
+          if (!defaultVariant) return null;
+          // Clamp to last day of month (e.g. day 31 in Feb → day 28/29)
+          const effectiveDay = Math.min(card.recurring_day!, lastDay);
+          const day = String(effectiveDay).padStart(2, "0");
+          return {
+            user_id: user.id,
+            source_card_id: card.id,
+            date: `${yearMonth}-${day}`,
+            title: card.title,
+            amount: defaultVariant.amount,
+            category_id: card.category_id,
+            type: card.type,
+            note: card.note ?? null,
+            position: 0,
+          };
+        })
+        .filter(Boolean) as object[];
+
+      if (toInsert.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert(toInsert)
+        .select("*, category:categories(*)");
+      if (error) throw error;
+      return data as Transaction[];
+    },
+    onSuccess: (txns) => {
+      txns.forEach((txn) => addTransaction(txn));
+      const months = [...new Set(txns.map((t) => t.date.slice(0, 7)))];
+      months.forEach((m) => {
+        qc.invalidateQueries({ queryKey: ["transactions-month", m] });
+      });
     },
     onError: (e: Error) => toast.error(e.message),
   });

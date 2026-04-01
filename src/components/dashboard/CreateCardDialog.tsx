@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Check, Tag } from "lucide-react";
+import { Plus, Trash2, Check, Tag, RefreshCw } from "lucide-react";
 import type { SpendingCard, TransactionType } from "@/types";
 import { useDashboardT } from "@/hooks/useDashboardT";
 
@@ -40,10 +40,20 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
   const updateCard = useUpdateCard();
 
   const [title, setTitle] = useState(editCard?.title ?? "");
-  const [type, setType] = useState<TransactionType>(editCard?.type ?? "expense");
-  const [categoryId, setCategoryId] = useState<string | null>(editCard?.category_id ?? null);
+  const [type, setType] = useState<TransactionType>(
+    editCard?.type ?? "expense",
+  );
+  const [categoryId, setCategoryId] = useState<string | null>(
+    editCard?.category_id ?? null,
+  );
   const [createCatOpen, setCreateCatOpen] = useState(false);
   const [note, setNote] = useState(editCard?.note ?? "");
+  const [isRecurring, setIsRecurring] = useState(
+    editCard?.is_recurring ?? false,
+  );
+  const [recurringDay, setRecurringDay] = useState<string>(
+    editCard?.recurring_day ? String(editCard.recurring_day) : "",
+  );
   const [variants, setVariants] = useState<Variant[]>(
     editCard?.variants && editCard.variants.length > 0
       ? editCard.variants
@@ -103,6 +113,8 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
       category_id: categoryId,
       type,
       note: note.trim() || undefined,
+      is_recurring: isRecurring,
+      recurring_day: isRecurring && recurringDay ? Number(recurringDay) : null,
       variants: variants
         .filter((v) => v.amount)
         .map((v) => ({
@@ -305,6 +317,70 @@ export function CreateCardDialog({ open, onOpenChange, editCard }: Props) {
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
+            </div>
+
+            {/* Recurring */}
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setIsRecurring((v) => !v)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left",
+                  isRecurring
+                    ? "bg-indigo-50 dark:bg-indigo-900/30"
+                    : "bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800",
+                )}>
+                <RefreshCw
+                  className={cn(
+                    "w-4 h-4 shrink-0 transition-colors",
+                    isRecurring
+                      ? "text-indigo-500"
+                      : "text-slate-400 dark:text-slate-500",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "flex-1 text-sm font-medium",
+                    isRecurring
+                      ? "text-indigo-700 dark:text-indigo-300"
+                      : "text-slate-600 dark:text-slate-400",
+                  )}>
+                  {t.recurringLabel}
+                </span>
+                <div
+                  className={cn(
+                    "w-9 h-5 rounded-full transition-colors relative shrink-0",
+                    isRecurring
+                      ? "bg-indigo-500"
+                      : "bg-slate-200 dark:bg-slate-700",
+                  )}>
+                  <div
+                    className={cn(
+                      "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all",
+                      isRecurring ? "left-[calc(100%-18px)]" : "left-0.5",
+                    )}
+                  />
+                </div>
+              </button>
+              {isRecurring && (
+                <div className="px-3 py-2.5 bg-indigo-50/70 dark:bg-indigo-900/20 border-t border-indigo-100 dark:border-indigo-900/50 flex items-center gap-3">
+                  <label className="text-xs text-slate-600 dark:text-slate-400 shrink-0">
+                    {t.recurringDayLabel}
+                  </label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={recurringDay}
+                    onChange={(e) => setRecurringDay(e.target.value)}
+                    placeholder="1–31"
+                    className="w-20 h-7 text-xs"
+                  />
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 flex-1">
+                    {t.recurringDayHint}
+                  </p>
+                </div>
+              )}
             </div>
 
             <DialogFooter>

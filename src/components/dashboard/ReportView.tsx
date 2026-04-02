@@ -10,12 +10,16 @@ import {
 } from "date-fns";
 import { useAppStore } from "@/store/useAppStore";
 import { useLocale } from "@/hooks/useLocale";
-import { useMonthlyReport, useMonthlyBudgets, useUpsertBudget } from "@/hooks/useData";
+import {
+  useMonthlyReport,
+  useMonthlyBudgets,
+  useUpsertBudget,
+} from "@/hooks/useData";
 import { formatCompact, parseCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { useDashboardT } from "@/hooks/useDashboardT";
 import type { Transaction } from "@/types";
-import { toast } from "sonner";
+import { exportTransactionsCsv } from "@/lib/csv";
 import {
   TrendingDown,
   TrendingUp,
@@ -25,7 +29,9 @@ import {
   ChevronRight,
   ChevronDown,
   Target,
+  Download,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   ResponsiveContainer,
   BarChart,
@@ -90,7 +96,12 @@ export function ReportView() {
     const amount = trimmed ? parseCompact(trimmed) : 0;
     upsertBudget.mutate(
       { category_id: categoryId, month: viewMonth, amount },
-      { onSuccess: () => { setEditBudgetKey(null); setBudgetInput(""); } },
+      {
+        onSuccess: () => {
+          setEditBudgetKey(null);
+          setBudgetInput("");
+        },
+      },
     );
   }
 
@@ -191,16 +202,47 @@ export function ReportView() {
 
   const hasData = stats.totalExpense > 0 || stats.totalIncome > 0;
 
+  function handleExportCsv() {
+    const allTxns: Transaction[] = Object.values(transactionsByDate)
+      .flat()
+      .filter((txn) => txn.date.startsWith(viewMonth));
+    if (allTxns.length === 0) {
+      toast.error(t.noReportData);
+      return;
+    }
+    exportTransactionsCsv(allTxns, t.exportCsvFilename(viewMonth), {
+      date: t.csvColDate,
+      title: t.csvColTitle,
+      amount: t.csvColAmount,
+      type: t.csvColType,
+      category: t.csvColCategory,
+      note: t.csvColNote,
+      income: t.csvTypeIncome,
+      expense: t.csvTypeExpense,
+    });
+  }
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       {/* Header */}
-      <div className="px-5 pt-5 pb-3 border-b border-slate-100 flex-shrink-0">
-        <h3 className="font-semibold text-slate-700 text-sm">
-          {t.reportTitle(month, year)}
-        </h3>
-        <p className="text-[11px] text-slate-400 mt-0.5">
-          {format(firstOfMonth, "MMMM yyyy", { locale })}
-        </p>
+      <div className="px-5 pt-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0 flex items-start justify-between gap-2">
+        <div>
+          <h3 className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
+            {t.reportTitle(month, year)}
+          </h3>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+            {format(firstOfMonth, "MMMM yyyy", { locale })}
+          </p>
+        </div>
+        {hasData && (
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="shrink-0 flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors border border-slate-200 dark:border-slate-700">
+            <Download className="w-3 h-3" />
+            {t.exportCsv}
+          </button>
+        )}
       </div>
 
       <div className="flex-1 p-4 space-y-5">
@@ -360,13 +402,16 @@ export function ReportView() {
                     const catKey = cat.id ?? "__none__";
                     const isOpen = selectedCatKey === catKey;
                     const txns = catTxMap[catKey] ?? [];
-                    const budget = cat.id ? budgetByCategory[cat.id] : undefined;
+                    const budget = cat.id
+                      ? budgetByCategory[cat.id]
+                      : undefined;
                     const budgetPct = budget
                       ? Math.round((cat.value / budget) * 100)
                       : 0;
                     const isEditingBudget = editBudgetKey === catKey;
                     const isOver = budget && budgetPct >= 100;
-                    const isWarning = budget && budgetPct >= 80 && budgetPct < 100;
+                    const isWarning =
+                      budget && budgetPct >= 80 && budgetPct < 100;
                     return (
                       <div
                         key={cat.name}
@@ -420,7 +465,9 @@ export function ReportView() {
                               <div
                                 className={cn(
                                   "rounded-full overflow-hidden",
-                                  budget ? "h-2 bg-slate-200 dark:bg-slate-700" : "h-1.5 bg-slate-100 dark:bg-slate-700",
+                                  budget
+                                    ? "h-2 bg-slate-200 dark:bg-slate-700"
+                                    : "h-1.5 bg-slate-100 dark:bg-slate-700",
                                 )}>
                                 {budget ? (
                                   <div
@@ -441,7 +488,9 @@ export function ReportView() {
                                       width: `${pct}%`,
                                       backgroundColor:
                                         cat.color ||
-                                        CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+                                        CATEGORY_COLORS[
+                                          i % CATEGORY_COLORS.length
+                                        ],
                                     }}
                                   />
                                 )}
@@ -499,7 +548,11 @@ export function ReportView() {
                                     : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-indigo-300 hover:text-indigo-500",
                               )}>
                               <Target className="w-3 h-3" />
-                              <span>{budget ? formatCompact(budget) : t.setBudgetBtn}</span>
+                              <span>
+                                {budget
+                                  ? formatCompact(budget)
+                                  : t.setBudgetBtn}
+                              </span>
                             </button>
                           )}
 

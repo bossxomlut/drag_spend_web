@@ -14,6 +14,7 @@ import {
   TrendingUp,
   MousePointerClick,
   Star,
+  Smartphone,
 } from "lucide-react";
 import { LandingNav } from "@/components/LandingNav";
 import { useUILanguage } from "@/hooks/useUILanguage";
@@ -172,6 +173,42 @@ export default function LandingPage() {
       <div className="py-4 px-6 bg-white dark:bg-slate-900">
         <AdBanner className="max-w-4xl mx-auto" />
       </div>
+
+      {/* ─── Android App ──────────────────────────────────────── */}
+      <section className="py-20 px-6 bg-white dark:bg-slate-900">
+        <div className="max-w-4xl mx-auto">
+          <div className="rounded-3xl bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/60 dark:to-violet-950/60 border border-indigo-100 dark:border-indigo-800 p-10 text-center">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-5 shadow-lg shadow-indigo-200 dark:shadow-indigo-900">
+              <Smartphone className="w-7 h-7 text-white" />
+            </div>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3">
+              {t.androidLabel}
+            </p>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-slate-100 mb-3">
+              {t.androidTitle}
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto">
+              {t.androidSubtitle}
+            </p>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.bossxomlut.dragspend"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold px-6 py-3.5 rounded-xl shadow-lg transition-all hover:scale-105 hover:shadow-xl">
+              <GooglePlayIcon />
+              <div className="text-left">
+                <div className="text-[10px] opacity-60 leading-none mb-0.5">
+                  {t.androidBtnSub}
+                </div>
+                <div className="text-sm font-bold leading-tight">
+                  {t.androidBtn}
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ─── CTA ──────────────────────────────────────────────── */}
       <section className="py-28 px-6 text-center">
         <div className="max-w-2xl mx-auto">
@@ -220,6 +257,19 @@ export default function LandingPage() {
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
+
+function GooglePlayIcon() {
+  return (
+    <svg
+      viewBox="0 0 512 512"
+      className="w-5 h-5"
+      fill="currentColor"
+      aria-hidden="true">
+      {/* ionicons logo-google-play */}
+      <path d="M48 59.49v393a4.33 4.33 0 007.37 3.07L260 256 55.37 56.42A4.33 4.33 0 0048 59.49zM345.8 174L89.22 32.64l-.16-.09c-4.42-2.4-8.62 3.58-5 7.06l201.13 192.32zM84.08 472.39c-3.64 3.48.56 9.46 5 7.06l.16-.09L345.8 338l-60.61-57.95zM449.38 231l-71.65-39.46L310.36 256l67.37 64.43L449.38 281c19.49-10.77 19.49-39.23 0-50z" />
+    </svg>
+  );
+}
 
 function FeatureCard({
   icon,
@@ -472,6 +522,12 @@ const TRANSLATIONS = {
     ctaTitle: "Bắt đầu theo dõi chi tiêu ngay hôm nay",
     ctaSubtitle: "Miễn phí, không cần thẻ tín dụng. Đăng ký dưới 30 giây.",
     ctaBtn: "Tạo tài khoản miễn phí",
+    androidLabel: "Ứng dụng di động",
+    androidTitle: "Drag Spend có trên Android!",
+    androidSubtitle:
+      "Tải ứng dụng miễn phí từ Google Play và quản lý chi tiêu mọi lúc, mọi nơi.",
+    androidBtnSub: "Tải miễn phí trên",
+    androidBtn: "Google Play",
     footerTagline: "Quản lý chi tiêu thông minh",
     footerPrivacy: "Chính sách bảo mật",
     footerTerms: "Điều khoản sử dụng",
@@ -494,6 +550,12 @@ const TRANSLATIONS = {
     ctaTitle: "Start tracking your spending today",
     ctaSubtitle: "Free, no credit card required. Sign up in under 30 seconds.",
     ctaBtn: "Create free account",
+    androidLabel: "Mobile app",
+    androidTitle: "Drag Spend is on Android!",
+    androidSubtitle:
+      "Download the free app from Google Play and track your spending anytime, anywhere.",
+    androidBtnSub: "Get it free on",
+    androidBtn: "Google Play",
     footerTagline: "Smart expense tracking",
     footerPrivacy: "Privacy Policy",
     footerTerms: "Terms of Service",

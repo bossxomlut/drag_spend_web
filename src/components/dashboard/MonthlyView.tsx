@@ -17,6 +17,7 @@ import {
 import { useAppStore } from "@/store/useAppStore";
 import { useLocale } from "@/hooks/useLocale";
 import { useMonthlyTransactions } from "@/hooks/useData";
+import { useDashboardT } from "@/hooks/useDashboardT";
 import { formatCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import {
 
 export function MonthlyView() {
   const locale = useLocale();
+  const t = useDashboardT();
   const selectedDate = useAppStore((s) => s.selectedDate);
   const setSelectedDate = useAppStore((s) => s.setSelectedDate);
   const viewMonth = useAppStore((s) => s.viewMonth);
@@ -180,7 +182,7 @@ export function MonthlyView() {
       {/* Monthly summary */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-          Tổng tháng {month}/{year}
+          {t.monthSummaryTitle(month, year)}
         </h4>
 
         {/* Stat cards */}
@@ -189,7 +191,7 @@ export function MonthlyView() {
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-green-500" />
               <span className="text-xs text-green-700 font-medium">
-                Thu nhập
+                {t.monthIncome}
               </span>
             </div>
             <span className="text-sm font-bold text-green-600">
@@ -200,7 +202,9 @@ export function MonthlyView() {
           <div className="flex items-center justify-between p-3 rounded-xl bg-red-50 border border-red-100">
             <div className="flex items-center gap-2">
               <TrendingDown className="w-4 h-4 text-red-400" />
-              <span className="text-xs text-red-700 font-medium">Chi tiêu</span>
+              <span className="text-xs text-red-700 font-medium">
+                {t.monthExpense}
+              </span>
             </div>
             <span className="text-sm font-bold text-red-500">
               -{formatCompact(monthExpense)}
@@ -210,7 +214,9 @@ export function MonthlyView() {
           <Separator />
 
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <span className="text-xs text-slate-600 font-medium">Còn lại</span>
+            <span className="text-xs text-slate-600 font-medium">
+              {t.monthRemaining}
+            </span>
             <span
               className={cn(
                 "text-sm font-bold",
@@ -230,7 +236,7 @@ export function MonthlyView() {
         {Object.keys(activeDays).length > 0 && (
           <>
             <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-4">
-              Ngày có chi tiêu
+              {t.monthActiveDays}
             </h4>
             <div className="space-y-1.5">
               {Object.entries(activeDays)

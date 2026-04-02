@@ -38,6 +38,12 @@ const T = {
     btnTitleSave: "Lưu thành thẻ mới",
     btnTitleDelete: "Xóa",
     loadingMore: "Đang tải thêm...",
+    // MonthlyView
+    monthSummaryTitle: (m: number, y: number) => `Tổng tháng ${m}/${y}`,
+    monthIncome: "Thu nhập",
+    monthExpense: "Chi tiêu",
+    monthRemaining: "Còn lại",
+    monthActiveDays: "Ngày có chi tiêu",
     // ReportView
     reportTitle: (m: number, y: number) => `Báo cáo ${m}/${y}`,
     noReportData: "Chưa có dữ liệu tháng này",
@@ -224,6 +230,13 @@ const T = {
     btnTitleSave: "Save as new card",
     btnTitleDelete: "Delete",
     loadingMore: "Loading more...",
+    // MonthlyView
+    monthSummaryTitle: (m: number, y: number) => `Month ${m}/${y} summary`,
+    monthIncome: "Income",
+    monthExpense: "Expenses",
+    monthRemaining: "Remaining",
+    monthActiveDays: "Days with spending",
+    // ReportView
     reportTitle: (m: number, y: number) => `Report ${m}/${y}`,
     noReportData: "No data for this month",
     exportCsv: "Export CSV",

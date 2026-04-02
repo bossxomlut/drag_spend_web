@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { LandingNav } from "@/components/LandingNav";
 import { useUILanguage } from "@/hooks/useUILanguage";
+import { AdBanner } from "@/components/AdBanner";
 
 export default function LandingPage() {
   const [lang] = useUILanguage();
@@ -167,7 +168,10 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
+      {/* ─── Ad Banner ────────────────────────────────────── */}
+      <div className="py-4 px-6 bg-white dark:bg-slate-900">
+        <AdBanner className="max-w-4xl mx-auto" />
+      </div>
       {/* ─── CTA ──────────────────────────────────────────────── */}
       <section className="py-28 px-6 text-center">
         <div className="max-w-2xl mx-auto">

@@ -12,10 +12,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { useAppStore } from "@/store/useAppStore";
-import {
-  useInitialDashboardData,
-  useCreateTransaction,
-} from "@/hooks/useData";
+import { useInitialDashboardData, useCreateTransaction } from "@/hooks/useData";
 import { CardPanel } from "./CardPanel";
 import { SelectedDayView } from "./SelectedDayView";
 import { MonthlyView } from "./MonthlyView";
@@ -26,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { LayoutGrid, CalendarDays, Calendar, BarChart2 } from "lucide-react";
 import type { DragItem } from "@/types";
 import { useDashboardT } from "@/hooks/useDashboardT";
+import { AdBanner } from "@/components/AdBanner";
 
 // ─── View registry ─────────────────────────────────────────────────────────────
 // To add a new panel: add one entry here. Key = tab id, desktop controls visibility.
@@ -199,6 +197,7 @@ export function DashboardClient() {
       onDragEnd={handleDragEnd}>
       <div className="flex flex-col h-screen bg-slate-50">
         <DashboardHeader />
+        <AdBanner className="flex-shrink-0 px-4 py-1 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
 
         {/* ── Main content area ───────────────────────────────── */}
         <div className="flex flex-1 overflow-hidden">

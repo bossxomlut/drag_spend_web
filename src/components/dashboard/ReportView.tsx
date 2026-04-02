@@ -12,6 +12,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { useLocale } from "@/hooks/useLocale";
 import {
   useMonthlyReport,
+  useMonthlyTransactions,
   useMonthlyBudgets,
   useUpsertBudget,
 } from "@/hooks/useData";
@@ -62,8 +63,11 @@ export function ReportView() {
   const locale = useLocale();
   const t = useDashboardT();
   const viewMonth = useAppStore((s) => s.viewMonth);
-  const transactionsByDate = useAppStore((s) => s.transactionsByDate);
   const { data: reportData = [] } = useMonthlyReport(viewMonth);
+  // Share the same TQ cache key — zero extra network request.
+  // Using TQ data (instead of Zustand accumulating store) ensures catTxMap
+  // and categoryData are always in sync and strictly scoped to viewMonth.
+  const { data: rawTxns = [] } = useMonthlyTransactions(viewMonth);
   const [selectedCatKey, setSelectedCatKey] = useState<string | null>(null);
   const [editBudgetKey, setEditBudgetKey] = useState<string | null>(null);
   const [budgetInput, setBudgetInput] = useState("");
@@ -81,10 +85,11 @@ export function ReportView() {
     return map;
   }, [storeBudgets, viewMonth]);
 
-  // Reset budget edit state when navigating months
+  // Reset UI state when navigating months
   useEffect(() => {
     setEditBudgetKey(null);
     setBudgetInput("");
+    setSelectedCatKey(null);
   }, [viewMonth]);
 
   function saveBudget(categoryId: string, input: string) {
@@ -160,14 +165,11 @@ export function ReportView() {
   }, [reportData, t]);
 
   // ── Transactions grouped by category key ─────────────────
+  // Derived from the same TQ cache as categoryData — strictly month-scoped.
   const catTxMap = useMemo(() => {
-    const all: Transaction[] = Object.values(transactionsByDate)
-      .flat()
-      .filter(
-        (txn) => txn.type === "expense" && txn.date.startsWith(viewMonth),
-      );
     const map: Record<string, Transaction[]> = {};
-    for (const txn of all) {
+    for (const txn of rawTxns) {
+      if (txn.type !== "expense") continue;
       const key = txn.category_id ?? "__none__";
       if (!map[key]) map[key] = [];
       map[key].push(txn);
@@ -178,7 +180,7 @@ export function ReportView() {
       );
     }
     return map;
-  }, [transactionsByDate, viewMonth]);
+  }, [rawTxns]);
 
   // ── Summary stats ────────────────────────────────────────
   const stats = useMemo(() => {
@@ -203,14 +205,11 @@ export function ReportView() {
   const hasData = stats.totalExpense > 0 || stats.totalIncome > 0;
 
   function handleExportCsv() {
-    const allTxns: Transaction[] = Object.values(transactionsByDate)
-      .flat()
-      .filter((txn) => txn.date.startsWith(viewMonth));
-    if (allTxns.length === 0) {
+    if (rawTxns.length === 0) {
       toast.error(t.noReportData);
       return;
     }
-    exportTransactionsCsv(allTxns, t.exportCsvFilename(viewMonth), {
+    exportTransactionsCsv(rawTxns, t.exportCsvFilename(viewMonth), {
       date: t.csvColDate,
       title: t.csvColTitle,
       amount: t.csvColAmount,
@@ -414,7 +413,7 @@ export function ReportView() {
                       budget && budgetPct >= 80 && budgetPct < 100;
                     return (
                       <div
-                        key={cat.name}
+                        key={catKey}
                         className={cn(
                           "rounded-xl border transition-colors",
                           isOver

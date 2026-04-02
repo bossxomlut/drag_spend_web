@@ -60,6 +60,7 @@ import { TransactionTableView, type DraftEdit } from "./TransactionTableView";
 import { useDashboardT } from "@/hooks/useDashboardT";
 import { useAdStrategy } from "@/hooks/useAdStrategy";
 import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 import { toast } from "sonner";
 import type { Transaction, TransactionType } from "@/types";
 
@@ -554,6 +555,9 @@ export function SelectedDayView() {
             {dayAdConfig && expenses.length >= 3 && (
               <SmartBanner config={dayAdConfig} />
             )}
+
+            {/* Google AdSense banner */}
+            <AdBanner />
 
             {/* Income transactions */}
             {incomes.length > 0 && (

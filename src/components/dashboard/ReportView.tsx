@@ -19,6 +19,9 @@ import {
 import { formatCompact, parseCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { useDashboardT } from "@/hooks/useDashboardT";
+import { useAdStrategy } from "@/hooks/useAdStrategy";
+import { SmartBanner } from "@/components/SmartBanner";
+import { AdBanner } from "@/components/AdBanner";
 import type { Transaction } from "@/types";
 import { exportTransactionsCsv } from "@/lib/csv";
 import {
@@ -204,6 +207,14 @@ export function ReportView() {
 
   const hasData = stats.totalExpense > 0 || stats.totalIncome > 0;
 
+  const adConfig = useAdStrategy({
+    totalExpense: stats.totalExpense,
+    totalIncome: stats.totalIncome,
+    avgDaily: stats.avgDaily,
+    activeDayCount: stats.activeDayCount,
+    categoryData,
+  });
+
   function handleExportCsv() {
     if (rawTxns.length === 0) {
       toast.error(t.noReportData);
@@ -289,6 +300,9 @@ export function ReportView() {
                 color="green"
               />
             </div>
+
+            {/* ── Contextual insight banner ─────────────────── */}
+            {adConfig && <SmartBanner config={adConfig} />}
 
             {/* ── Daily expense bar chart ───────────────────── */}
             <section>
@@ -655,6 +669,9 @@ export function ReportView() {
                 </div>
               </section>
             )}
+
+            {/* ── Google AdSense — bottom of report (engaged users) ── */}
+            <AdBanner />
           </>
         )}
       </div>

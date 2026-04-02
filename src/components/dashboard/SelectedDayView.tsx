@@ -58,6 +58,8 @@ import {
 import { EditTransactionDialog } from "./EditTransactionDialog";
 import { TransactionTableView, type DraftEdit } from "./TransactionTableView";
 import { useDashboardT } from "@/hooks/useDashboardT";
+import { useAdStrategy } from "@/hooks/useAdStrategy";
+import { SmartBanner } from "@/components/SmartBanner";
 import { toast } from "sonner";
 import type { Transaction, TransactionType } from "@/types";
 
@@ -205,6 +207,12 @@ export function SelectedDayView() {
       net: totalIncome - totalExpense,
     };
   }, [transactions]);
+
+  const dayAdConfig = useAdStrategy({
+    totalExpense,
+    totalIncome,
+    transactionCount: expenses.length,
+  });
 
   const INITIAL_CHUNK = 40;
   const CHUNK_SIZE = 30;
@@ -540,6 +548,11 @@ export function SelectedDayView() {
                   </div>
                 </SortableContext>
               </section>
+            )}
+
+            {/* Native inline banner after 3+ expenses — tip/insight */}
+            {dayAdConfig && expenses.length >= 3 && (
+              <SmartBanner config={dayAdConfig} />
             )}
 
             {/* Income transactions */}

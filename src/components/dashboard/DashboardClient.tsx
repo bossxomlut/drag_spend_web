@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 import { LayoutGrid, CalendarDays, Calendar, BarChart2 } from "lucide-react";
 import type { DragItem } from "@/types";
 import { useDashboardT } from "@/hooks/useDashboardT";
-import { AdBanner } from "@/components/AdBanner";
 
 // ─── View registry ─────────────────────────────────────────────────────────────
 // To add a new panel: add one entry here. Key = tab id, desktop controls visibility.
@@ -197,7 +196,6 @@ export function DashboardClient() {
       onDragEnd={handleDragEnd}>
       <div className="flex flex-col h-screen bg-slate-50">
         <DashboardHeader />
-        <AdBanner />
 
         {/* ── Main content area ───────────────────────────────── */}
         <div className="flex flex-1 overflow-hidden">

@@ -22,27 +22,39 @@ const supabase = createClient();
 // ─── Parallel Initial Data Fetch ─────────────────────────────
 
 export function useInitialDashboardData() {
+  const qc = useQueryClient();
   const setLanguage = useAppStore((s) => s.setLanguage);
   const setCategories = useAppStore((s) => s.setCategories);
   const setCards = useAppStore((s) => s.setCards);
+  const setTransactionsForDate = useAppStore((s) => s.setTransactionsForDate);
 
   return useQuery({
     queryKey: ["initial-dashboard"],
     queryFn: async () => {
-      const supabase = createClient();
+      // getSession() reads from cookie/localStorage — no network round-trip.
+      // Auth is already validated by the middleware (Edge), so this is safe.
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return null;
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return null;
+      const userId = session.user.id;
 
-      const [profileRes, categoriesRes, cardsRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", user.id).single(),
+      const today = format(new Date(), "yyyy-MM-dd");
+
+      const [profileRes, categoriesRes, cardsRes, txnsRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", userId).single(),
         supabase.from("categories").select("*").order("type").order("name"),
         supabase
           .from("spending_cards")
           .select(`*, category:categories(*), variants:card_variants(*)`)
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .order("use_count", { ascending: false })
+          .order("position"),
+        // Pre-fetch today's transactions so SelectedDayView renders instantly
+        supabase
+          .from("transactions")
+          .select("*, category:categories(*)")
+          .eq("date", today)
           .order("position"),
       ]);
 
@@ -63,13 +75,21 @@ export function useInitialDashboardData() {
           supabase
             .from("profiles")
             .update({ language: effectiveLang })
-            .eq("id", user.id)
+            .eq("id", userId)
             .then(() => {});
         }
       }
 
       setCategories(categoriesRes.data as Category[]);
       setCards(cardsRes.data as SpendingCard[]);
+
+      // Pre-populate today's transactions into both the store and the TanStack
+      // cache so useTransactions(today) in SelectedDayView hits cache immediately.
+      if (!txnsRes.error && txnsRes.data) {
+        const todayTxns = txnsRes.data as Transaction[];
+        setTransactionsForDate(today, todayTxns);
+        qc.setQueryData(["transactions", today], todayTxns);
+      }
 
       return {
         profile: profile as Profile,
@@ -78,6 +98,7 @@ export function useInitialDashboardData() {
       };
     },
     staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
   });
 }
 

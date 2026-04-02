@@ -24,6 +24,7 @@ import { SmartBanner } from "@/components/SmartBanner";
 import { AdBanner } from "@/components/AdBanner";
 import type { Transaction } from "@/types";
 import { exportTransactionsCsv } from "@/lib/csv";
+import { CsvAdGateDialog } from "@/components/dashboard/CsvAdGateDialog";
 import {
   TrendingDown,
   TrendingUp,
@@ -72,6 +73,8 @@ export function ReportView() {
   // and categoryData are always in sync and strictly scoped to viewMonth.
   const { data: rawTxns = [] } = useMonthlyTransactions(viewMonth);
   const [selectedCatKey, setSelectedCatKey] = useState<string | null>(null);
+  const [csvAdGateOpen, setCsvAdGateOpen] = useState(false);
+  const [csvAdGateKey, setCsvAdGateKey] = useState(0);
   const [editBudgetKey, setEditBudgetKey] = useState<string | null>(null);
   const [budgetInput, setBudgetInput] = useState("");
   const upsertBudget = useUpsertBudget();
@@ -220,6 +223,11 @@ export function ReportView() {
       toast.error(t.noReportData);
       return;
     }
+    setCsvAdGateKey((k) => k + 1);
+    setCsvAdGateOpen(true);
+  }
+
+  function doDownloadCsv() {
     exportTransactionsCsv(rawTxns, t.exportCsvFilename(viewMonth), {
       date: t.csvColDate,
       title: t.csvColTitle,
@@ -675,6 +683,13 @@ export function ReportView() {
           </>
         )}
       </div>
+
+      <CsvAdGateDialog
+        key={csvAdGateKey}
+        open={csvAdGateOpen}
+        onOpenChange={setCsvAdGateOpen}
+        onDownload={doDownloadCsv}
+      />
     </div>
   );
 }

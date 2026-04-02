@@ -198,6 +198,12 @@ const T = {
     recurringApplied: (n: number) => `Đã thêm ${n} khoản định kỳ`,
     recurringNoneLeft: "Tất cả khoản định kỳ đã được thêm",
     recurringBadge: "Định kỳ",
+    // CSV Ad Gate
+    csvAdGateTitle: "Xem quảng cáo để tải CSV",
+    csvAdGateDesc: "Vui lòng chờ quảng cáo trong giây lát để tải file.",
+    csvAdGateWait: (n: number) => `Chờ ${n} giây...`,
+    csvAdGateDownload: "Tải xuống",
+    csvAdGateCancel: "Huỷ",
   },
   en: {
     tabCards: "Cards",
@@ -385,6 +391,12 @@ const T = {
       `Added ${n} recurring item${n === 1 ? "" : "s"}`,
     recurringNoneLeft: "All recurring items already added",
     recurringBadge: "Recurring",
+    // CSV Ad Gate
+    csvAdGateTitle: "Watch an ad to download CSV",
+    csvAdGateDesc: "Please wait while viewing the ad to unlock the download.",
+    csvAdGateWait: (n: number) => `Wait ${n}s...`,
+    csvAdGateDownload: "Download",
+    csvAdGateCancel: "Cancel",
   },
 };
 

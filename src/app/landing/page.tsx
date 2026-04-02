@@ -170,9 +170,7 @@ export default function LandingPage() {
         </div>
       </section>
       {/* ─── Ad Banner ────────────────────────────────────── */}
-      <div className="py-4 px-6 bg-white dark:bg-slate-900">
-        <AdBanner className="max-w-4xl mx-auto" />
-      </div>
+      <AdBanner />
 
       {/* ─── Android App ──────────────────────────────────────── */}
       <section className="py-20 px-6 bg-white dark:bg-slate-900">

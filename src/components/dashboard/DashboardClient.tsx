@@ -197,7 +197,7 @@ export function DashboardClient() {
       onDragEnd={handleDragEnd}>
       <div className="flex flex-col h-screen bg-slate-50">
         <DashboardHeader />
-        <AdBanner className="flex-shrink-0 px-4 py-1 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900" />
+        <AdBanner />
 
         {/* ── Main content area ───────────────────────────────── */}
         <div className="flex flex-1 overflow-hidden">

@@ -71,6 +71,7 @@ export async function updateSession(request: NextRequest) {
   const PUBLIC_PATHS = [
     "/",
     "/api/health",
+    "/api/webhook",
     "/landing",
     "/privacy",
     "/terms",

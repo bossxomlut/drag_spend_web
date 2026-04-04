@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import {
   format,
   eachDayOfInterval,
@@ -35,6 +35,8 @@ import {
   ChevronDown,
   Target,
   Download,
+  SlidersHorizontal,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -77,6 +79,9 @@ export function ReportView() {
   const [csvAdGateKey, setCsvAdGateKey] = useState(0);
   const [editBudgetKey, setEditBudgetKey] = useState<string | null>(null);
   const [budgetInput, setBudgetInput] = useState("");
+  const [dailyFilter, setDailyFilter] = useState<string>("all");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
   const upsertBudget = useUpsertBudget();
 
   // Fetch budgets for the viewed month; populate store
@@ -96,7 +101,20 @@ export function ReportView() {
     setEditBudgetKey(null);
     setBudgetInput("");
     setSelectedCatKey(null);
+    setDailyFilter("all");
+    setFilterOpen(false);
   }, [viewMonth]);
+
+  // Close filter dropdown on click outside
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    }
+    if (filterOpen) document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [filterOpen]);
 
   function saveBudget(categoryId: string, input: string) {
     const trimmed = input.trim();
@@ -140,6 +158,35 @@ export function ReportView() {
       };
     });
   }, [reportData, days]);
+
+  // ── Filtered daily data for the daily chart ───────────────
+  const filteredDailyData = useMemo(() => {
+    if (
+      dailyFilter === "all" ||
+      dailyFilter === "expense" ||
+      dailyFilter === "income"
+    ) {
+      return dailyData;
+    }
+    // Category-scoped: recompute per-day totals from raw transactions
+    const dayMap: Record<string, number> = {};
+    for (const txn of rawTxns) {
+      if (txn.type !== "expense") continue;
+      const key = txn.category_id ?? "__none__";
+      if (key !== dailyFilter) continue;
+      if (!dayMap[txn.date]) dayMap[txn.date] = 0;
+      dayMap[txn.date] += txn.amount;
+    }
+    return days.map((day) => {
+      const dateStr = format(day, "yyyy-MM-dd");
+      return {
+        day: format(day, "d"),
+        date: dateStr,
+        expense: dayMap[dateStr] ?? 0,
+        income: 0,
+      };
+    });
+  }, [dailyFilter, dailyData, rawTxns, days]);
 
   // ── Category pie data ────────────────────────────────────
   const categoryData = useMemo(() => {
@@ -209,6 +256,14 @@ export function ReportView() {
   }, [dailyData]);
 
   const hasData = stats.totalExpense > 0 || stats.totalIncome > 0;
+
+  // Lookup selected category for chart bar styling
+  const selectedCatForChart =
+    dailyFilter !== "all" &&
+    dailyFilter !== "expense" &&
+    dailyFilter !== "income"
+      ? (categoryData.find((c) => (c.id ?? "__none__") === dailyFilter) ?? null)
+      : null;
 
   const adConfig = useAdStrategy({
     totalExpense: stats.totalExpense,
@@ -314,12 +369,131 @@ export function ReportView() {
 
             {/* ── Daily expense bar chart ───────────────────── */}
             <section>
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                {t.chartByDay}
-              </p>
+              {/* Section header with filter button */}
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  {t.chartByDay}
+                </p>
+                <div className="relative" ref={filterRef}>
+                  <button
+                    type="button"
+                    onClick={() => setFilterOpen((o) => !o)}
+                    className={cn(
+                      "flex items-center gap-1.5 h-6 px-2 rounded-lg text-[11px] font-medium transition-colors border",
+                      dailyFilter !== "all"
+                        ? "border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-500 dark:hover:text-indigo-400",
+                    )}>
+                    <SlidersHorizontal className="w-3 h-3" />
+                    {dailyFilter !== "all" && (
+                      <span className="max-w-[72px] truncate">
+                        {dailyFilter === "expense"
+                          ? t.expense
+                          : dailyFilter === "income"
+                            ? t.income
+                            : (() => {
+                                const cat = categoryData.find(
+                                  (c) => (c.id ?? "__none__") === dailyFilter,
+                                );
+                                return cat ? `${cat.icon} ${cat.name}` : "";
+                              })()}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Dropdown */}
+                  {filterOpen && (
+                    <div className="absolute right-0 top-8 z-20 min-w-[160px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
+                      {/* Type group */}
+                      <div className="px-2.5 pt-2 pb-1">
+                        <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                          {t.filterBtn}
+                        </p>
+                        {[
+                          { key: "all", label: t.typeAll, color: "#6366f1" },
+                          {
+                            key: "expense",
+                            label: t.expense,
+                            color: "#f87171",
+                          },
+                          ...(stats.totalIncome > 0
+                            ? [
+                                {
+                                  key: "income",
+                                  label: t.income,
+                                  color: "#86efac",
+                                },
+                              ]
+                            : []),
+                        ].map(({ key, label, color }) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => {
+                              setDailyFilter(key);
+                              setFilterOpen(false);
+                            }}
+                            className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-[12px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full shrink-0"
+                              style={{ backgroundColor: color }}
+                            />
+                            <span className="flex-1 text-left">{label}</span>
+                            {dailyFilter === key && (
+                              <Check className="w-3 h-3 text-indigo-500 dark:text-indigo-400" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Categories group */}
+                      {categoryData.length > 0 && (
+                        <>
+                          <div className="h-px bg-slate-100 dark:bg-slate-700 mx-2" />
+                          <div className="px-2.5 pt-1.5 pb-2">
+                            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                              {t.chartByCat}
+                            </p>
+                            {categoryData.map((cat) => {
+                              const catKey = cat.id ?? "__none__";
+                              return (
+                                <button
+                                  key={catKey}
+                                  type="button"
+                                  onClick={() => {
+                                    setDailyFilter(catKey);
+                                    setFilterOpen(false);
+                                  }}
+                                  className="flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-[12px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors">
+                                  <span
+                                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                                    style={{
+                                      backgroundColor: cat.color || "#6366f1",
+                                    }}
+                                  />
+                                  <span className="text-sm leading-none shrink-0">
+                                    {cat.icon}
+                                  </span>
+                                  <span className="flex-1 text-left truncate">
+                                    {cat.name}
+                                  </span>
+                                  {dailyFilter === catKey && (
+                                    <Check className="w-3 h-3 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <ResponsiveContainer width="100%" height={140}>
                 <BarChart
-                  data={dailyData}
+                  data={filteredDailyData}
                   barSize={6}
                   margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                   <XAxis
@@ -346,20 +520,27 @@ export function ReportView() {
                       boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                     }}
                   />
-                  {stats.totalIncome > 0 && (
+                  {(dailyFilter === "all" && stats.totalIncome > 0) ||
+                  dailyFilter === "income" ? (
                     <Bar
                       dataKey="income"
                       fill="#86efac"
                       radius={[3, 3, 0, 0]}
                       name={t.chartBarIncome}
                     />
+                  ) : null}
+                  {dailyFilter !== "income" && (
+                    <Bar
+                      dataKey="expense"
+                      fill={selectedCatForChart?.color ?? "#f87171"}
+                      radius={[3, 3, 0, 0]}
+                      name={
+                        selectedCatForChart
+                          ? `${selectedCatForChart.icon} ${selectedCatForChart.name}`
+                          : t.chartBarExpense
+                      }
+                    />
                   )}
-                  <Bar
-                    dataKey="expense"
-                    fill="#f87171"
-                    radius={[3, 3, 0, 0]}
-                    name={t.chartBarExpense}
-                  />
                 </BarChart>
               </ResponsiveContainer>
             </section>

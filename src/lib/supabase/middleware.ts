@@ -70,6 +70,7 @@ export async function updateSession(request: NextRequest) {
 
   const PUBLIC_PATHS = [
     "/",
+    "/ads.txt",
     "/api/health",
     "/api/webhook",
     "/landing",

@@ -21,7 +21,6 @@ import { useDashboardT } from "@/hooks/useDashboardT";
 import { formatCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   ChevronLeft,
   ChevronRight,
@@ -79,7 +78,7 @@ export function MonthlyView() {
   return (
     <div className="flex flex-col h-full">
       {/* Month navigation */}
-      <div className="px-4 pt-5 pb-4 border-b border-slate-100">
+      <div className="px-4 pt-5 pb-4 border-b border-slate-100 dark:border-slate-700">
         <div className="flex items-center justify-between mb-4">
           <Button
             variant="ghost"
@@ -90,7 +89,7 @@ export function MonthlyView() {
             }>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <h3 className="font-semibold text-slate-700 text-sm capitalize">
+          <h3 className="font-semibold text-slate-700 dark:text-slate-200 text-sm capitalize">
             {format(firstOfMonth, "MMMM yyyy", { locale })}
           </h3>
           <Button
@@ -141,8 +140,8 @@ export function MonthlyView() {
                   isSelected
                     ? "bg-indigo-600 text-white"
                     : todayFlag
-                      ? "bg-indigo-50 text-indigo-700 font-semibold"
-                      : "hover:bg-slate-100 text-slate-600",
+                      ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-semibold"
+                      : "hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300",
                 )}>
                 <span
                   className={cn(
@@ -185,51 +184,49 @@ export function MonthlyView() {
           {t.monthSummaryTitle(month, year)}
         </h4>
 
-        {/* Stat cards */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-100">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-green-500" />
-              <span className="text-xs text-green-700 font-medium">
+        {/* Stat cards — 2-col grid prevents overflow at any column width */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col p-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800">
+            <div className="flex items-center gap-1 mb-1">
+              <TrendingUp className="w-3 h-3 text-green-500 shrink-0" />
+              <span className="text-[10px] text-green-700 dark:text-green-400 font-medium truncate">
                 {t.monthIncome}
               </span>
             </div>
-            <span className="text-sm font-bold text-green-600">
+            <span className="text-sm font-bold text-green-600 dark:text-green-400 tabular-nums">
               +{formatCompact(monthIncome)}
             </span>
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-xl bg-red-50 border border-red-100">
-            <div className="flex items-center gap-2">
-              <TrendingDown className="w-4 h-4 text-red-400" />
-              <span className="text-xs text-red-700 font-medium">
+          <div className="flex flex-col p-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800">
+            <div className="flex items-center gap-1 mb-1">
+              <TrendingDown className="w-3 h-3 text-red-400 shrink-0" />
+              <span className="text-[10px] text-red-700 dark:text-red-400 font-medium truncate">
                 {t.monthExpense}
               </span>
             </div>
-            <span className="text-sm font-bold text-red-500">
+            <span className="text-sm font-bold text-red-500 dark:text-red-400 tabular-nums">
               -{formatCompact(monthExpense)}
             </span>
           </div>
+        </div>
 
-          <Separator />
-
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <span className="text-xs text-slate-600 font-medium">
-              {t.monthRemaining}
-            </span>
-            <span
-              className={cn(
-                "text-sm font-bold",
-                monthNet > 0
-                  ? "text-green-600"
-                  : monthNet < 0
-                    ? "text-red-500"
-                    : "text-slate-500",
-              )}>
-              {monthNet > 0 ? "+" : ""}
-              {formatCompact(monthNet)}
-            </span>
-          </div>
+        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+            {t.monthRemaining}
+          </span>
+          <span
+            className={cn(
+              "text-sm font-bold tabular-nums",
+              monthNet > 0
+                ? "text-green-600"
+                : monthNet < 0
+                  ? "text-red-500"
+                  : "text-slate-500",
+            )}>
+            {monthNet > 0 ? "+" : ""}
+            {formatCompact(monthNet)}
+          </span>
         </div>
 
         {/* Top spending days */}
@@ -255,7 +252,7 @@ export function MonthlyView() {
                         "w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all",
                         isSelected
                           ? "bg-indigo-600 text-white"
-                          : "bg-white border border-slate-100 hover:border-slate-300 text-slate-600",
+                          : "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-500 text-slate-600 dark:text-slate-300",
                       )}>
                       <span
                         className={cn(

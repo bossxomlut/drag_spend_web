@@ -49,7 +49,7 @@ const VIEWS = (components: {
     icon: <LayoutGrid className="w-5 h-5" />,
     labelKey: "tabCards",
     desktopClass:
-      "border-r border-slate-200 bg-white overflow-y-auto flex-shrink-0 lg:w-86 lg:flex lg:flex-col",
+      "hidden border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-y-auto flex-shrink-0 lg:flex lg:flex-col lg:w-64",
     component: components.cards,
   },
   {
@@ -57,7 +57,7 @@ const VIEWS = (components: {
     icon: <CalendarDays className="w-5 h-5" />,
     labelKey: "tabDay",
     desktopClass:
-      "border-r border-slate-200 bg-white flex flex-col overflow-hidden flex-shrink-0 lg:w-72 lg:flex",
+      "hidden border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden lg:flex lg:flex-col lg:flex-1",
     component: components.day,
   },
   {
@@ -65,14 +65,15 @@ const VIEWS = (components: {
     icon: <Calendar className="w-5 h-5" />,
     labelKey: "tabMonth",
     desktopClass:
-      "border-r border-slate-200 bg-white overflow-y-auto lg:flex lg:flex-col lg:flex-1 xl:flex-none xl:w-64 xl:flex-shrink-0",
+      "hidden border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-y-auto xl:flex xl:flex-col xl:w-52 xl:flex-shrink-0",
     component: components.month,
   },
   {
     tab: "report",
     icon: <BarChart2 className="w-5 h-5" />,
     labelKey: "tabReport",
-    desktopClass: "bg-white overflow-y-auto xl:flex xl:flex-col xl:flex-1",
+    desktopClass:
+      "hidden bg-white dark:bg-slate-900 overflow-y-auto xl:flex xl:flex-col xl:flex-1",
     component: components.report,
   },
 ];
@@ -194,7 +195,7 @@ export function DashboardClient() {
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}>
-      <div className="flex flex-col h-screen bg-slate-50">
+      <div className="fixed inset-0 flex flex-col bg-slate-50 dark:bg-slate-800 overflow-hidden">
         <DashboardHeader />
 
         {/* ── Main content area ───────────────────────────────── */}
@@ -204,16 +205,20 @@ export function DashboardClient() {
               key={tab}
               className={cn(
                 desktopClass,
-                // Mobile: show only the active tab as full-width flex
-                mobileTab === tab ? "flex flex-col flex-1" : "hidden lg:flex",
+                // Mobile/tablet: show only the active tab as full-width panel
+                mobileTab === tab && "flex flex-col flex-1",
+                // At lg (not xl): hide cards+day when user switched to month/report
+                (tab === "cards" || tab === "day") &&
+                  (mobileTab === "month" || mobileTab === "report") &&
+                  "lg:hidden",
               )}>
               {component}
             </div>
           ))}
         </div>
 
-        {/* ── Mobile bottom tab bar (hidden on lg+) ──────────── */}
-        <nav className="lg:hidden flex-shrink-0 border-t border-slate-200 bg-white flex items-center justify-around h-14 z-50">
+        {/* ── Bottom tab bar: mobile + lg (hidden at xl where all 4 panels show) ── */}
+        <nav className="xl:hidden flex-shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-around h-14 z-50">
           {views.map(({ tab, icon, labelKey }) => (
             <button
               key={tab}
@@ -222,7 +227,7 @@ export function DashboardClient() {
                 "flex flex-col items-center gap-0.5 px-4 py-1 rounded-lg transition-colors",
                 mobileTab === tab
                   ? "text-indigo-600"
-                  : "text-slate-400 hover:text-slate-600",
+                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300",
               )}>
               {icon}
               <span className="text-[10px] font-medium">{t[labelKey]}</span>

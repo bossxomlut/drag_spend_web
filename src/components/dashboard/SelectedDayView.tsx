@@ -30,7 +30,6 @@ import {
 import { formatVND, formatCompact, parseCompact } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -334,49 +333,49 @@ export function SelectedDayView() {
   return (
     <div className="flex flex-col h-full">
       {/* Day header */}
-      <div className="px-3 lg:px-5 pt-3 lg:pt-5 pb-3 lg:pb-4 border-b border-slate-100">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
+      <div className="px-3 pt-3 pb-3 lg:pb-4 border-b border-slate-100 dark:border-slate-700">
+        <div className="flex items-center justify-between mb-1 gap-1">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 shrink-0"
               onClick={goPrev}>
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-slate-800 capitalize">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 capitalize truncate min-w-0">
                   {format(parsedDate, "EEEE", { locale })}
                 </h2>
                 {todayFlag && (
-                  <span className="text-[11px] font-semibold bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full shrink-0">
                     {t.today}
                   </span>
                 )}
               </div>
-              <p className="text-sm text-slate-400">
+              <p className="text-xs text-slate-400 dark:text-slate-500 truncate">
                 {format(parsedDate, "d MMMM yyyy", { locale })}
               </p>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 shrink-0"
               onClick={goNext}>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             {!todayFlag && (
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs gap-1.5"
+                className="h-8 w-8 p-0"
+                title={t.today}
                 onClick={goToday}>
                 <CalendarDays className="w-3.5 h-3.5" />
-                {t.today}
               </Button>
             )}
 
@@ -418,44 +417,41 @@ export function SelectedDayView() {
 
         {/* Day summary chips */}
         {transactions.length > 0 && (
-          <div className="flex items-center gap-3 mt-3">
+          <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2">
             {totalIncome > 0 && (
-              <div className="flex items-center gap-1.5 text-sm">
-                <TrendingUp className="w-4 h-4 text-green-500" />
+              <div className="flex items-center gap-1 text-xs">
+                <TrendingUp className="w-3 h-3 text-green-500" />
                 <span className="text-green-600 font-semibold">
                   +{formatCompact(totalIncome)}
                 </span>
               </div>
             )}
             {totalExpense > 0 && (
-              <div className="flex items-center gap-1.5 text-sm">
-                <TrendingDown className="w-4 h-4 text-red-400" />
+              <div className="flex items-center gap-1 text-xs">
+                <TrendingDown className="w-3 h-3 text-red-400" />
                 <span className="text-red-500 font-semibold">
                   -{formatCompact(totalExpense)}
                 </span>
               </div>
             )}
             {transactions.length > 0 && (
-              <>
-                <Separator orientation="vertical" className="h-4" />
-                <span
-                  className={cn(
-                    "text-sm font-bold",
-                    net < 0
-                      ? "text-red-500"
-                      : net > 0
-                        ? "text-green-600"
-                        : "text-slate-400",
-                  )}>
-                  {net === 0
-                    ? "±0"
-                    : `${net > 0 ? "+" : ""}${formatCompact(net)}`}
-                </span>
-                <span className="text-xs text-slate-400">
-                  {transactions.length} {t.transactions}
-                </span>
-              </>
+              <span
+                className={cn(
+                  "text-xs font-bold",
+                  net < 0
+                    ? "text-red-500"
+                    : net > 0
+                      ? "text-green-600"
+                      : "text-slate-400",
+                )}>
+                {net === 0
+                  ? "±0"
+                  : `${net > 0 ? "+" : ""}${formatCompact(net)}`}
+              </span>
             )}
+            <span className="text-[11px] text-slate-400">
+              {transactions.length} {t.transactions}
+            </span>
           </div>
         )}
       </div>
@@ -598,16 +594,20 @@ export function SelectedDayView() {
 
       {/* Bottom total bar */}
       {transactions.length > 0 && (
-        <div className="border-t border-slate-100 px-5 py-3 bg-slate-50 flex items-center justify-between">
-          <span className="text-xs text-slate-500">
+        <div className="border-t border-slate-100 dark:border-slate-700 px-3 py-2 bg-slate-50 dark:bg-slate-800 flex items-center justify-between flex-wrap gap-y-1">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             {transactions.length} {t.transactions}
           </span>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-3 text-sm flex-wrap justify-end">
             {totalIncome > 0 && (
-              <span className="text-green-600">+{formatVND(totalIncome)}</span>
+              <span className="text-green-600 dark:text-green-400">
+                +{formatVND(totalIncome)}
+              </span>
             )}
             {totalExpense > 0 && (
-              <span className="text-red-500">-{formatVND(totalExpense)}</span>
+              <span className="text-red-500 dark:text-red-400">
+                -{formatVND(totalExpense)}
+              </span>
             )}
             <span
               className={cn(

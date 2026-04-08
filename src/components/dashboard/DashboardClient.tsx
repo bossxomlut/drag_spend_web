@@ -49,7 +49,7 @@ const VIEWS = (components: {
     icon: <LayoutGrid className="w-5 h-5" />,
     labelKey: "tabCards",
     desktopClass:
-      "hidden border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-y-auto flex-shrink-0 lg:flex lg:flex-col lg:w-64",
+      "hidden border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-y-auto lg:flex lg:flex-col lg:w-80 xl:w-96 xl:flex-none xl:flex-shrink-0",
     component: components.cards,
   },
   {
@@ -57,7 +57,7 @@ const VIEWS = (components: {
     icon: <CalendarDays className="w-5 h-5" />,
     labelKey: "tabDay",
     desktopClass:
-      "hidden border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden lg:flex lg:flex-col lg:flex-1",
+      "hidden border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden lg:flex lg:flex-col lg:flex-1 xl:flex-1 xl:basis-0",
     component: components.day,
   },
   {
@@ -65,7 +65,7 @@ const VIEWS = (components: {
     icon: <Calendar className="w-5 h-5" />,
     labelKey: "tabMonth",
     desktopClass:
-      "hidden border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-y-auto xl:flex xl:flex-col xl:w-52 xl:flex-shrink-0",
+      "hidden border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-y-auto xl:flex xl:flex-col xl:flex-1 xl:basis-0",
     component: components.month,
   },
   {
@@ -73,7 +73,7 @@ const VIEWS = (components: {
     icon: <BarChart2 className="w-5 h-5" />,
     labelKey: "tabReport",
     desktopClass:
-      "hidden bg-white dark:bg-slate-900 overflow-y-auto xl:flex xl:flex-col xl:flex-1",
+      "hidden bg-white dark:bg-slate-900 overflow-y-auto xl:flex xl:flex-col xl:flex-1 xl:basis-0 xl:min-w-0",
     component: components.report,
   },
 ];
